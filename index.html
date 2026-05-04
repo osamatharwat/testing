@@ -458,6 +458,9 @@ body.kahf-theme{background:radial-gradient(circle at top,#065f46,#020617);}
   </div>
 
   <div class="footer">شارك التطبيق تؤجر عليه ❤️</div>
+  <button id="installBtn" class="btn" style="margin-bottom:10px;display:none;">
+  📲 تنزيل التطبيق
+</button>
 </div>
 
 <!-- MASCOT -->
@@ -1240,6 +1243,29 @@ if('serviceWorker' in navigator){
 }
 const up=new URLSearchParams(window.location.search),mp=up.get('mode');
 if(mp&&['morning','evening','quick'].includes(mp))setTimeout(()=>startMode(mp),400);
+  let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = 'block';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+
+  const { outcome } = await deferredPrompt.userChoice;
+
+  if (outcome === 'accepted') {
+    console.log('User installed');
+  }
+
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+});
 </script>
 </body>
 </html>
