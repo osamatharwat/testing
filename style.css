@@ -123,3 +123,55 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
 .alert-close { position:absolute; top:10px; left:10px; background:transparent; border:none; color:white; font-size:16px; cursor:pointer;}
 .alert-title { font-size:14px; font-weight:900; color:#fde68a; margin-bottom:5px; }
 .alert-sub { font-size:12px; color:#cbd5e1; }
+
+/* ================================================================
+   تجميل قائمة المتصدرين (Scrollable Leaderboard)
+================================================================ */
+
+/* 1. تحديد طول القائمة وتفعيل التمرير الداخلي */
+#lbRows {
+    max-height: 260px; /* طول القائمة (بيظهر حوالي 4 أشخاص والباقي سكرول) */
+    overflow-y: auto; /* تفعيل السكرول */
+    padding-left: 5px; /* مسافة عشان شريط السكرول ميبقاش لازق في الكلام */
+    margin-bottom: 15px;
+    border-radius: 12px;
+}
+
+/* 2. تجميل شكل شريط السكرول نفسه عشان يليق مع الزجاج اللامع */
+#lbRows::-webkit-scrollbar {
+    width: 6px; /* عرض الشريط */
+}
+#lbRows::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02); 
+    border-radius: 10px;
+}
+#lbRows::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15); 
+    border-radius: 10px;
+}
+#lbRows::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3); 
+}
+
+/* 3. تجميل شكل صفوف الأعضاء (الكروت الداخلية) */
+.lb-row {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03); /* شفافية خفيفة */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+/* حركة خفيفة لما تلمس اسم حد في القائمة */
+.lb-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+/* 4. تمييز صفك أنت (أنا) بشكل فخم ومختلف */
+.lb-row.me {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.05));
+    border: 1px solid rgba(244, 114, 182, 0.3);
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.1);
+}
