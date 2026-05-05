@@ -1,6 +1,36 @@
+/* ================================================================
+   1. SUPABASE CONFIG & REALTIME
+================================================================ */
 const SUPABASE_URL = 'https://ddqiiybuaozsjlrnckfz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_rzftsvyC9ahQTXW-Pq4BsA_EOTSY5kP';
 
+// تشغيل التحديث اللحظي (عشان لو حد من الجروب خلص، تظهرلك فوراً)
+let supabaseClient = null;
+if (window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseClient.channel('public:members')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, payload => {
+            if (AppState.myGroupCode) {
+                renderLeaderboard(); // تحديث القائمة فوراً
+            }
+        }).subscribe();
+}
+
+async function sbFetch(path, opts={}) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { 
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation', ...opts.headers }, 
+            ...opts 
+        });
+        if(!res.ok) throw new Error(await res.text());
+        const txt = await res.text(); 
+        return txt ? JSON.parse(txt) : [];
+    } catch(e) { throw e; }
+}
+
+/* ================================================================
+   2. STATE MANAGEMENT
+================================================================ */
 const AppState = {
     today: new Date().toDateString(),
     streak: parseInt(localStorage.getItem("streak")) || 0,
@@ -20,13 +50,13 @@ const AppState = {
 AppState.completedToday = localStorage.getItem("completedToday") === AppState.today;
 localStorage.setItem("myUserId", AppState.myUserId);
 
+/* ================================================================
+   3. DOM CACHING
+================================================================ */
 const DOM = {
     sadaqaScroll: document.getElementById("sadaqaScroll"), 
     duaGrid: document.getElementById("duaGrid"),
-    
-    // 👈 السطر ده اللي كان ناقص وموقف الأذكار والأدعية!
     card: document.getElementById("card"), 
-    
     sections: ['card', 'tasbeehArea', 'kahfArea', 'groupArea', 'finish'].map(id => document.getElementById(id)),
     quote: document.getElementById("quote"), 
     streakBadge: document.getElementById("streak"), 
@@ -54,6 +84,17 @@ const DOM = {
     celebTitle: document.getElementById("celebTitle"), 
     celebMsg: document.getElementById("celebMsg")
 };
+
+/* ================================================================
+   4. INIT & EVENTS
+================================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+    initStreak();
+    renderDynamicLists();
+    bindEvents();
+    DOM.quote.innerText = AppState.currentQuote;
+    if(AppState.notifEnabled) startNotifLoop();
+});
 
 function renderDynamicLists() {
     let sadaqaHtml = '';
@@ -106,6 +147,9 @@ function showMiniToast(msg) {
     t.innerText = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 3000);
 }
 
+/* ================================================================
+   5. STREAK ENGINE
+================================================================ */
 function initStreak() {
     let storedLast = localStorage.getItem("lastVisit");
     if (storedLast !== AppState.today) {
@@ -117,6 +161,9 @@ function initStreak() {
     if (!AppState.completedToday && new Date().getHours() >= 18) DOM.streakWarning.style.display = "block";
 }
 
+/* ================================================================
+   6. ZEKR ENGINE
+================================================================ */
 function startMode(mode) {
     hideAll(); AppState.currentModeName = mode;
     if (mode === 'morning') { document.body.classList.add("morning-theme"); setSpeech("صباح الأذكار ☀️"); }
@@ -168,6 +215,9 @@ function openDua(type) {
     loadZekr(); goTo("card");
 }
 
+/* ================================================================
+   7. TASBEEH & KAHF
+================================================================ */
 function openTasbeeh() {
     hideAll(); document.getElementById("tasbeehArea").style.display = "block"; setSpeech("سبح براحتك 🤍");
     AppState.freeCounter = 0; document.getElementById("freeCounter").innerText = 0;
@@ -200,21 +250,16 @@ document.getElementById("btnKahfNext").addEventListener("click", () => { if(AppS
 document.getElementById("btnKahfPrev").addEventListener("click", () => { if(AppState.kahfIndex > 0) { AppState.kahfIndex--; localStorage.setItem("kahfIndex", AppState.kahfIndex); renderKahf(); } });
 document.getElementById("btnRestartKahf").addEventListener("click", () => { AppState.kahfIndex = 0; localStorage.setItem("kahfIndex","0"); renderKahf(); });
 
-async function sbFetch(path, opts={}) {
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation', ...opts.headers }, ...opts });
-        if(!res.ok) throw new Error(await res.text());
-        const txt = await res.text(); return txt ? JSON.parse(txt) : [];
-    } catch(e) { throw e; }
-}
+/* ================================================================
+   8. GROUP LOGIC (أونلاين 100%)
+================================================================ */
 async function updateMyGroupStreak() {
     if(!AppState.myGroupCode) return;
-    try { await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { method: 'PATCH', body: JSON.stringify({streak: AppState.streak, done_today: true}) }); } catch(e){}
+    try { 
+        await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { method: 'PATCH', body: JSON.stringify({streak: AppState.streak, done_today: true}) }); 
+    } catch(e) { console.warn("تعذر تحديث السيرفر"); }
 }
 
-/* ================================================================
-   11. GROUP & SUPABASE (الجروبات وقاعدة البيانات)
-================================================================ */
 function openGroup() { 
     hideAll(); 
     document.getElementById("groupArea").style.display = "block"; 
@@ -226,9 +271,8 @@ function openGroup() {
 document.getElementById("btnShowJoin").addEventListener("click", () => document.getElementById("joinRow").style.display = "block");
 
 function setGroupStatus(msg, color='#f472b6') {
-    const statusEl = document.getElementById("groupStatus");
-    statusEl.style.color = color;
-    statusEl.innerText = msg;
+    document.getElementById("groupStatus").style.color = color;
+    document.getElementById("groupStatus").innerText = msg;
 }
 
 function getWeekStart() {
@@ -244,30 +288,15 @@ async function createGroup() {
     setGroupStatus("⏳ جاري الإنشاء أونلاين...", "#fcd34d");
 
     try {
-        // إنشاء الجروب أونلاين
-        await sbFetch('groups', { 
-            method: 'POST', 
-            body: JSON.stringify({ code: code, name: name + "'s Group", week_start: getWeekStart() }) 
-        });
-        
-        // إضافة المستخدم كأول عضو
-        await sbFetch('members', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-            body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday })
-        });
+        await sbFetch('groups', { method: 'POST', body: JSON.stringify({ code: code, name: name + "'s Group", week_start: getWeekStart() }) });
+        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday }) });
 
         AppState.myGroupCode = code; AppState.myName = name; 
         localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
-        showLeaderboard(); showMiniToast(`✅ الجروب اتعمل أونلاين! كوده: ${code}`);
+        showLeaderboard(); showMiniToast(`✅ الجروب اتعمل! كوده: ${code}`);
     } catch (e) {
-        console.warn("Supabase Error:", e);
-        // في حالة فشل الاتصال بالنت، يشتغل محلي مؤقتاً
-        const members = {}; members[AppState.myUserId] = {name, streak: AppState.streak, done_today: AppState.completedToday, user_id: AppState.myUserId};
-        localStorage.setItem("group_" + code, JSON.stringify(members));
-        AppState.myGroupCode = code; AppState.myName = name; 
-        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
-        showLeaderboard(); showMiniToast(`⚠️ الجروب اتعمل محلياً لعدم وجود نت!`);
+        showMiniToast(`⚠️ مشكلة في الاتصال بالانترنت!`);
+        setGroupStatus("");
     }
 }
 
@@ -276,36 +305,20 @@ async function joinGroup() {
     const code = document.getElementById("codeInput").value.trim();
     
     if(!name || code.length !== 6) return showMiniToast("تأكد من الاسم والكود");
-    
     setGroupStatus("⏳ جاري الانضمام أونلاين...", "#fcd34d");
 
     try {
-        // التأكد من أن الجروب موجود في قاعدة البيانات
         const groups = await sbFetch(`groups?code=eq.${code}&select=code`);
-        if(!groups.length) {
-            setGroupStatus("❌ الكود ده مش موجود، تأكد منه", '#ef4444');
-            return;
-        }
+        if(!groups.length) { setGroupStatus("❌ الكود ده مش موجود، تأكد منه", '#ef4444'); return; }
 
-        // إضافة العضو أونلاين
-        await sbFetch('members', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
-            body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday })
-        });
+        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday }) });
 
         AppState.myGroupCode = code; AppState.myName = name; 
         localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
         showLeaderboard(); showMiniToast("✅ انضممت أونلاين بنجاح!");
     } catch (e) {
-        console.warn("Supabase Error:", e);
-        // في حالة فشل الاتصال بالنت، يشتغل محلي مؤقتاً
-        AppState.myGroupCode = code; AppState.myName = name; 
-        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
-        const members = JSON.parse(localStorage.getItem("group_" + code) || "{}"); 
-        members[AppState.myUserId] = {name, streak: AppState.streak, done_today: AppState.completedToday, user_id: AppState.myUserId}; 
-        localStorage.setItem("group_" + code, JSON.stringify(members));
-        showLeaderboard(); showMiniToast("⚠️ انضممت محلياً لعدم وجود نت!");
+        showMiniToast("⚠️ مشكلة في الاتصال بالانترنت!");
+        setGroupStatus("");
     }
 }
 
@@ -325,13 +338,10 @@ async function renderLeaderboard() {
     
     let arr = [];
     try {
-        // جلب البيانات من السيرفر أونلاين
         arr = await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&order=streak.desc&limit=10`);
     } catch (e) {
-        // في حالة فشل الاتصال، جلب المحلي
-        console.warn("Supabase Error, local fallback:", e);
-        const members = JSON.parse(localStorage.getItem("group_" + AppState.myGroupCode) || "{}"); 
-        arr = Object.values(members).sort((a, b) => b.streak - a.streak);
+        document.getElementById("lbRows").innerHTML = '<div style="text-align:center; color:#ef4444; padding: 10px;">⚠️ مشكلة في الاتصال بالسيرفر.</div>';
+        return;
     }
 
     let html = ''; 
@@ -367,31 +377,104 @@ function renderHomeLB(arr) {
 }
 
 document.getElementById("btnLeaveGroup").addEventListener("click", () => { 
-    localStorage.removeItem("myGroupCode"); AppState.myGroupCode = null; 
+    localStorage.removeItem("myGroupCode"); localStorage.removeItem("myName");
+    AppState.myGroupCode = null; AppState.myName = null;
     document.getElementById("leaderboard").style.display = "none"; 
     document.getElementById("groupSetup").style.display = "block"; 
+    document.getElementById("homeLB").style.display = "none";
 });
-function renderLeaderboard() {
-    const members = JSON.parse(localStorage.getItem("group_"+AppState.myGroupCode)||"{}"); const arr = Object.values(members).sort((a,b)=>b.streak-a.streak);
-    let html=''; arr.forEach((m,i)=> { html+=`<div class="lb-row"><div class="lb-rank">${['🥇','🥈','🥉'][i]||'👤'}</div><div class="lb-name">${m.name}</div><div class="lb-streak">🔥${m.streak}</div></div>`; });
-    document.getElementById("lbRows").innerHTML = html || '<div style="text-align:center;">ابعت الكود لأصحابك!</div>';
+
+document.getElementById("groupCodeDisplay").addEventListener("click", () => {
+    navigator.clipboard?.writeText(AppState.myGroupCode).then(()=>showMiniToast("✅ الكود اتنسخ!"));
+});
+
+/* ================================================================
+   9. SHARE & CELEBRATION (المشاركة)
+================================================================ */
+function getShareText(ctx){
+    if(ctx==='quote') return `✨ حصنك اليومي ✨\n\n"${AppState.currentQuote}"\n\n📲 ${APP_URL}`;
+    if(ctx==='sadaqa') return `🤍 صدقة جارية على أرواح خالد آدم وعمرو خالد ومحمود فوزي وغيرهم 🤍\n\nشارك معايا تطبيق حصنك اليومي للأذكار 🌿\n\n📲 ${APP_URL}\n\nكل ما حد بيستخدمه بيجي الأجر عليهم وعليك ✨`;
+    if(ctx==='finish') return `🏆 خلصت وردي اليومي في حصنك اليومي!\n🔥 الاستريك: ${AppState.streak} يوم\n\n📲 ${APP_URL} 🤍`;
+    if(ctx==='kahf') return `📖 أتممت سورة الكهف كاملة النهارده 🌟\n\nسورة الكهف نور بين الجمعتين ✨\n\n📲 ${APP_URL}`;
+    if(ctx==='group') return `🏆 يا جماعة! انضموا لتحدي الأذكار معايا!\n\nكود الجروب: ${AppState.myGroupCode||'------'}\n\n📲 ${APP_URL}\nاضغط "تحدي الجروب" وادخل الكود 🌿`;
+    return `✨ حصنك اليومي\n📲 ${APP_URL}`;
 }
-document.getElementById("btnLeaveGroup").addEventListener("click", () => { localStorage.removeItem("myGroupCode"); AppState.myGroupCode=null; document.getElementById("leaderboard").style.display="none"; document.getElementById("groupSetup").style.display="block"; });
 
 function openShareModal(ctx) { AppState.shareContext = ctx; DOM.shareModal.classList.add("show"); }
 function closeShareModal() { DOM.shareModal.classList.remove("show"); }
-function doShare(platform) { const txt = `✨ حصنك اليومي\n📲 ${APP_URL}`; if(platform==='copy'){ navigator.clipboard?.writeText(txt); showMiniToast("نسخ!"); } closeShareModal(); }
+
+function doShare(platform) { 
+    const txt = getShareText(AppState.shareContext);
+    const enc = encodeURIComponent(txt);
+    const urls = {
+        whatsapp:`https://wa.me/?text=${enc}`,
+        facebook:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(APP_URL)}&quote=${enc}`,
+        twitter:`https://twitter.com/intent/tweet?text=${enc}`
+    };
+
+    if(platform==='copy'){ navigator.clipboard?.writeText(txt).then(() => showMiniToast("تم النسخ!")); closeShareModal(); return; }
+    if(platform==='instagram'){ navigator.clipboard?.writeText(txt).then(() => showMiniToast("النص اتنسخ، افتح انستجرام والصقه!")); closeShareModal(); return; }
+    if(platform==='native'){
+        if(navigator.share) navigator.share({title:'حصنك اليومي', text:txt, url:APP_URL}).catch(()=>{});
+        else navigator.clipboard?.writeText(txt).then(()=>showMiniToast("تم النسخ!"));
+        closeShareModal(); return;
+    }
+    
+    window.open(urls[platform], '_blank');
+    closeShareModal(); 
+}
 
 function showCelebration(title, msg) { DOM.celebTitle.innerText = title; DOM.celebMsg.innerText = msg; DOM.celebOverlay.classList.add("show"); }
 function closeCelebration() { DOM.celebOverlay.classList.remove("show"); }
 
+/* ================================================================
+   10. NOTIFICATIONS
+================================================================ */
 document.getElementById("notifToggle").addEventListener("click", () => {
-    AppState.notifEnabled = !AppState.notifEnabled; localStorage.setItem("notifEnabled", AppState.notifEnabled);
+    AppState.notifEnabled = !AppState.notifEnabled; 
+    localStorage.setItem("notifEnabled", AppState.notifEnabled);
     document.getElementById("notifToggle").classList.toggle("on", AppState.notifEnabled);
     document.getElementById("notifStatus").innerText = AppState.notifEnabled ? "شغال" : "إيقاف";
+    
+    if (AppState.notifEnabled) {
+        if (!("Notification" in window)) return showMiniToast("المتصفح لا يدعم الإشعارات");
+        Notification.requestPermission().then(perm => {
+            if (perm === "granted") startNotifLoop();
+        });
+    } else {
+        if(AppState.notifInterval) clearInterval(AppState.notifInterval);
+    }
 });
 
+function startNotifLoop() {
+    if(AppState.notifInterval) clearInterval(AppState.notifInterval);
+    AppState.notifInterval = setInterval(() => {
+        if(!AppState.notifEnabled || Notification.permission !== "granted") return;
+        const now = new Date(), h = now.getHours(), m = now.getMinutes(), d = now.getDay();
+        if(m !== 0) return; 
+        
+        if(h === 8) new Notification("🌅 صباح الأذكار!",{body:"ابدأ يومك بذكر الله يا بطل 🌿", icon:"/icons/icon-192x192.png"});
+        if(h === 17) new Notification("🌙 أذكار المساء!",{body:"اختم يومك بذكر الله وتنام محصن 🤍", icon:"/icons/icon-192x192.png"});
+        if(d === 5 && h === 14) new Notification("📖 سورة الكهف!",{body:"سورة الكهف نور بين الجمعتين ✨", icon:"/icons/icon-192x192.png"});
+    }, 60000);
+}
+
+/* ================================================================
+   11. PWA & INSTALLATION
+================================================================ */
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBtn').style.display = 'block'; });
-document.getElementById('installBtn').addEventListener('click', async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; deferredPrompt = null; });
+window.addEventListener('beforeinstallprompt', (e) => { 
+    e.preventDefault(); 
+    deferredPrompt = e; 
+    document.getElementById('installBtn').style.display = 'block'; 
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => { 
+    if (!deferredPrompt) return; 
+    deferredPrompt.prompt(); 
+    const { outcome } = await deferredPrompt.userChoice; 
+    if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; 
+    deferredPrompt = null; 
+});
+
 window.addEventListener('appinstalled', () => document.getElementById('installBtn').style.display = 'none');
