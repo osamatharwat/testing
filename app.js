@@ -304,6 +304,10 @@ function finishZekr() {
     else { cel = 'أشطر كتكوت! خلصت الورد المختصر ⚡'; hint = '🌅 جرّب أذكار الصباح أو المساء للحصن الكامل!'; }
     
     document.getElementById("nextHint").innerText = hint;
+
+    // السطر ده هو اللي ضفناه عشان يبعت التحديث للجروب
+    updateMyGroupStreak(); 
+
     setTimeout(() => showCelebration('أشطر كتكوت كده خلصنا! 🏆', cel), 300);
 }
 
@@ -314,17 +318,28 @@ function openDua(type) {
     const dua = duas[type];
     if (!dua) return;
 
-    document.getElementById("card").style.display = "block";
-    DOM.zekrTitle.innerText = "🤲 دعاء";
-    DOM.zekrText.innerText = dua.text;
-    DOM.zekrFadl.innerText = "📖 " + dua.ref;
-    DOM.repeat.innerText = "-";
-    DOM.counter.innerText = "0";
+    hideAll(); // إخفاء باقي الشاشات
+    document.body.className = ''; // مسح أي ثيم قديم
+    DOM.card.style.display = "block"; // إظهار كارت الأذكار
 
-    DOM.progress.style.width = "100%";
+    // إقناع النظام إن الدعاء ده هو الورد الحالي
+    AppState.currentModeName = 'dua';
+    AppState.currentMode = [{
+        title: "🤲 دعاء",
+        text: dua.text,
+        fadl: dua.ref,
+        repeat: 1 // تكرار مرة واحدة
+    }];
+    
+    // تصفير العدادات
+    AppState.currentIndex = 0;
+    AppState.currentCount = 0;
+    AppState.xp = 0;
+    AppState.combo = 0;
+
+    loadZekr();
     goTo("card");
 }
-
 /* ================================================================
    8. SHARE MODAL (المشاركة)
 ================================================================ */
@@ -488,6 +503,44 @@ document.getElementById("btnRestartKahf").addEventListener("click", () => {
 /* ================================================================
    11. GROUP & SUPABASE (الجروبات وقاعدة البيانات)
 ================================================================ */
+// إعدادات Supabase والـ API
+const SUPABASE_URL = 'https://ddqiiybuaozsjlrnckfz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_rzftsvyC9ahQTXW-Pq4BsA_EOTSY5kP';
+
+async function sbFetch(path, opts = {}) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': opts.prefer || 'return=representation',
+                ...opts.headers
+            },
+            ...opts
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const txt = await res.text();
+        return txt ? JSON.parse(txt) : [];
+    } catch (e) {
+        console.warn("Supabase Fetch Error:", e);
+        throw e;
+    }
+}
+
+// دالة إرسال الاستريك للجروب
+async function updateMyGroupStreak() {
+    if (!AppState.myGroupCode) return;
+    try {
+        await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, {
+            method: 'PATCH',
+            headers: { 'Prefer': 'return=representation' },
+            body: JSON.stringify({ streak: AppState.streak, done_today: true })
+        });
+    } catch (e) {
+        console.warn('تم التحديث محلياً فقط');
+    }
+}
 function openGroup(){
     hideAll();
     document.getElementById("groupArea").style.display="block";
@@ -667,31 +720,30 @@ if(AppState.notifEnabled && "Notification" in window && Notification.permission=
 document.getElementById("btnAlertKahf").addEventListener("click", openKahf);
 
 /* ================================================================
-   13. PWA (تثبيت التطبيق)
+   13. PWA & INSTALL TO HOME SCREEN
 ================================================================ */
-let deferredPrompt=null;
-window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault(); deferredPrompt=e;
-    document.getElementById('installBtn').style.display='block';
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+
+// المتصفح بيقول للتطبيق إنه جاهز للتنزيل
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
 });
 
-window.addEventListener('load', () => {
-    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if(isIos && !isStandalone) document.getElementById('iosHint').style.display='block';
-    if(isStandalone){ document.getElementById('installBtn').style.display='none'; document.getElementById('iosHint').style.display='none'; }
-});
-
-document.getElementById('installBtn').addEventListener('click', async () => {
-    if(!deferredPrompt){showMiniToast("افتح من Chrome 📲");return;}
-    await deferredPrompt.prompt();
-    const {outcome} = await deferredPrompt.userChoice;
-    deferredPrompt=null;
-    document.getElementById('installBtn').style.display='none';
-    if(outcome==='accepted') showMiniToast('🎉 تم تنزيل التطبيق!');
+// لما المستخدم يضغط على الزرار
+installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        installBtn.style.display = 'none';
+        showMiniToast('🎉 جزاك الله خيراً.. حصنك بقى على الشاشة الرئيسية!');
+    }
+    deferredPrompt = null;
 });
 
 window.addEventListener('appinstalled', () => {
-    document.getElementById('installBtn').style.display='none';
-    showMiniToast('🎉 حصنك على الهوم سكرين!');
+    installBtn.style.display = 'none';
 });
