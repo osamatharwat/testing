@@ -44,6 +44,8 @@ async function sbFetch(path, opts={}) {
 const AppState = {
     today: new Date().toDateString(),
     streak: parseInt(localStorage.getItem("streak")) || 0,
+    points: parseFloat(localStorage.getItem("points")) || 0, // 👈 عداد النقاط
+    tasbeehForPoints: parseInt(localStorage.getItem("tasbeehForPoints")) || 0, // 👈 عداد الـ 50 تسبيحة
     completedToday: false,
     currentMode: [], currentModeName: '', currentIndex: 0, currentCount: 0, xp: 0, combo: 0, halfwayShown: false,
     freeCounter: 0,
@@ -56,10 +58,6 @@ const AppState = {
     currentQuote: quotes[Math.floor(Math.random() * quotes.length)],
     shareContext: 'quote'
 };
-
-AppState.completedToday = localStorage.getItem("completedToday") === AppState.today;
-localStorage.setItem("myUserId", AppState.myUserId);
-
 /* ================================================================
    3. DOM CACHING
 ================================================================ */
@@ -208,15 +206,32 @@ function countZekr() {
 
 function finishZekr() {
     if(AppState.currentModeName !== 'dua') {
-        localStorage.setItem("completedToday", AppState.today); AppState.completedToday = true;
+        localStorage.setItem("completedToday", AppState.today); 
+        AppState.completedToday = true;
         DOM.streakWarning.style.display = "none";
-        updateMyGroupStreak();
+        
+        // حساب النقاط الجديدة
+        let pointsAdded = 0;
+        const modeKey = `done_${AppState.currentModeName}_${AppState.today}`;
+        
+        // الحماية: مش هيحسب نقاط للورد لو اتعمل قبل كده النهارده
+        if (!localStorage.getItem(modeKey)) {
+            if (AppState.currentModeName === 'morning') pointsAdded = 1;
+            else if (AppState.currentModeName === 'evening') pointsAdded = 1;
+            else if (AppState.currentModeName === 'quick') pointsAdded = 0.5;
+            
+            if (pointsAdded > 0) {
+                AppState.points += pointsAdded;
+                localStorage.setItem("points", AppState.points);
+                localStorage.setItem(modeKey, "true"); // تسجيل إن الورد ده خلص النهارده
+            }
+        }
+        updateMyGroupStreak(); // تحديث السيرفر
     }
     DOM.card.style.display = "none"; document.getElementById("finish").style.display = "block";
     let cel = AppState.currentModeName==='dua' ? 'تقبل الله دعاءك 🤲' : 'أشطر كتكوت خلص ورده! 🏆';
     setTimeout(() => showCelebration('ممتاز!', cel), 300);
 }
-
 function openDua(type) {
     const dua = duas[type]; if (!dua) return;
     hideAll(); DOM.card.style.display = "block";
@@ -238,9 +253,22 @@ function openTasbeeh() {
 }
 
 document.getElementById("btnIncreaseTasbeeh").addEventListener("click", () => {
-    navigator.vibrate?.(30); AppState.freeCounter++; document.getElementById("freeCounter").innerText = AppState.freeCounter;
+    navigator.vibrate?.(30); 
+    AppState.freeCounter++; 
+    document.getElementById("freeCounter").innerText = AppState.freeCounter;
     const key = `tasbeeh_${AppState.today}_${document.getElementById("tasbeehSelect").value}`;
     localStorage.setItem(key, (parseInt(localStorage.getItem(key)||0)+1).toString());
+
+    // 👈 نظام نقاط التسبيح: كل 50 تسبيحة = 1 نقطة
+    AppState.tasbeehForPoints++;
+    if (AppState.tasbeehForPoints >= 50) {
+        AppState.points += 1;
+        AppState.tasbeehForPoints = 0; // تصفير العداد الفرعي
+        localStorage.setItem("points", AppState.points);
+        updateMyGroupStreak(); // رفع النقطة الجديدة للجروب
+        showMiniToast("🌟 كفو! تمت إضافة نقطة لترتيبك في الجروب");
+    }
+    localStorage.setItem("tasbeehForPoints", AppState.tasbeehForPoints);
 });
 // تصفير العداد عند تغيير نوع التسبيح من القائمة
 document.getElementById("tasbeehSelect").addEventListener("change", () => {
@@ -277,7 +305,11 @@ document.getElementById("btnRestartKahf").addEventListener("click", () => { AppS
 async function updateMyGroupStreak() {
     if(!AppState.myGroupCode) return;
     try { 
-        await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { method: 'PATCH', body: JSON.stringify({streak: AppState.streak, done_today: true}) }); 
+        await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { 
+            method: 'PATCH', 
+            // بنبعت النقاط والاستريك سوا للسيرفر
+            body: JSON.stringify({ streak: AppState.streak, done_today: AppState.completedToday, points: AppState.points }) 
+        }); 
     } catch(e) { console.warn("تعذر تحديث السيرفر"); }
 }
 
@@ -310,14 +342,12 @@ async function createGroup() {
 
     try {
         await sbFetch('groups', { method: 'POST', body: JSON.stringify({ code: code, name: name + "'s Group", week_start: getWeekStart() }) });
-        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday }) });
+        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday, points: AppState.points }) });
 
         AppState.myGroupCode = code; AppState.myName = name; 
         localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
         showLeaderboard(); showMiniToast(`✅ الجروب اتعمل! كوده: ${code}`);
-  } catch (e) {
-        // السطر ده هيظهرلك رسالة بالخطأ الحقيقي اللي جاي من السيرفر
-        alert("تفاصيل الخطأ من Supabase: " + e.message); 
+    } catch (e) {
         showMiniToast(`⚠️ مشكلة في الاتصال بالانترنت!`);
         setGroupStatus("");
     }
@@ -334,7 +364,7 @@ async function joinGroup() {
         const groups = await sbFetch(`groups?code=eq.${code}&select=code`);
         if(!groups.length) { setGroupStatus("❌ الكود ده مش موجود، تأكد منه", '#ef4444'); return; }
 
-        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday }) });
+        await sbFetch('members', { method: 'POST', headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday, points: AppState.points }) });
 
         AppState.myGroupCode = code; AppState.myName = name; 
         localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
@@ -361,7 +391,8 @@ async function renderLeaderboard() {
     
     let arr = [];
     try {
-        arr = await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&order=streak.desc&limit=10`);
+        // ترتيب المتصدرين بناءً على النقاط (points) بدلاً من الاستريك
+        arr = await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&order=points.desc&limit=10`);
     } catch (e) {
         document.getElementById("lbRows").innerHTML = '<div style="text-align:center; color:#ef4444; padding: 10px;">⚠️ مشكلة في الاتصال بالسيرفر.</div>';
         return;
@@ -373,7 +404,8 @@ async function renderLeaderboard() {
         html += `<div class="lb-row ${isMe ? 'me' : ''}">
                     <div class="lb-rank">${ranks[i] || '👤'}</div>
                     <div class="lb-name">${m.name} ${isMe ? '(أنا)' : ''}</div>
-                    <div class="lb-streak">🔥${m.streak || 0}</div>
+                    <div class="lb-streak" style="color:#fcd34d;">⭐ ${m.points || 0}</div>
+                    <div class="lb-streak" style="font-size:11px; margin-right:6px; opacity:0.7;">🔥 ${m.streak || 0}</div>
                     <div class="lb-done">${m.done_today ? '✅' : '⏳'}</div>
                  </div>`; 
     });
@@ -392,7 +424,8 @@ function renderHomeLB(arr) {
         html += `<div class="home-lb-row ${isMe ? 'me' : ''}">
                     <div class="home-lb-rank">${ranks[i]}</div>
                     <div class="home-lb-name">${m.name}${isMe ? ' 👈' : ''}</div>
-                    <div class="home-lb-streak">🔥${m.streak || 0}</div>
+                    <div class="home-lb-streak" style="color:#fcd34d;">⭐ ${m.points || 0}</div>
+                    <div class="home-lb-streak" style="font-size:10px; margin-right:5px; opacity:0.7;">🔥 ${m.streak || 0}</div>
                     <div class="home-lb-done">${m.done_today ? '✅' : '⏳'}</div>
                  </div>`;
     });
@@ -410,7 +443,6 @@ document.getElementById("btnLeaveGroup").addEventListener("click", () => {
 document.getElementById("groupCodeDisplay").addEventListener("click", () => {
     navigator.clipboard?.writeText(AppState.myGroupCode).then(()=>showMiniToast("✅ الكود اتنسخ!"));
 });
-
 /* ================================================================
    9. SHARE & CELEBRATION (المشاركة)
 ================================================================ */
