@@ -18,14 +18,24 @@ if (window.supabase) {
 
 async function sbFetch(path, opts={}) {
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { 
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation', ...opts.headers }, 
-            ...opts 
-        });
+        // تجهيز الإعدادات بدون ما نمسح الـ Headers الأساسية
+        const fetchOptions = { ...opts };
+        fetchOptions.headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': opts.prefer || 'return=representation',
+            ...(opts.headers || {}) // دمج أي هيدرز إضافية هنا بأمان
+        };
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, fetchOptions);
         if(!res.ok) throw new Error(await res.text());
+        
         const txt = await res.text(); 
         return txt ? JSON.parse(txt) : [];
-    } catch(e) { throw e; }
+    } catch(e) { 
+        throw e; 
+    }
 }
 
 /* ================================================================
