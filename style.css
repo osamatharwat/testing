@@ -112,7 +112,7 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
 .s-copy{background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,0.2);}
 .s-native{background: linear-gradient(135deg,#6366f1,#4338ca);}
 
-.tasbeeh-area, .kahf-area, .group-area, .finish { display: none; }
+#card, .tasbeeh-area, .kahf-area, .group-area, .finish { display: none; }
 .group-input, .tasbeeh-select { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: white; font-size: 15px; font-weight: 600; margin-bottom: 12px; text-align: center; }
 .group-create-btn, .group-join-btn, .sadaqa-share-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 14px; border-radius: 16px; color: white; font-weight: 800; font-size: 14px; width:100%; cursor: pointer; transition: 0.3s; font-family:'Cairo';}
 .group-create-btn:active { transform: scale(0.96); }
