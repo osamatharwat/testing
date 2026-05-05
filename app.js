@@ -224,12 +224,23 @@ function openTasbeeh() {
     const allKeys = Object.keys(localStorage).filter(k => k.startsWith(`tasbeeh_${AppState.today}_`));
     const total = allKeys.reduce((s,k) => s + (parseInt(localStorage.getItem(k))||0), 0);
     document.getElementById("tasbeehTodayCount").innerText = `تسبيحاتك اليوم: ${total}`; goTo("tasbeehArea");
+   document.getElementById("tasbeehDateLabel").innerText = new Intl.DateTimeFormat('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
 }
 
 document.getElementById("btnIncreaseTasbeeh").addEventListener("click", () => {
     navigator.vibrate?.(30); AppState.freeCounter++; document.getElementById("freeCounter").innerText = AppState.freeCounter;
     const key = `tasbeeh_${AppState.today}_${document.getElementById("tasbeehSelect").value}`;
     localStorage.setItem(key, (parseInt(localStorage.getItem(key)||0)+1).toString());
+});
+// تصفير العداد عند تغيير نوع التسبيح من القائمة
+document.getElementById("tasbeehSelect").addEventListener("change", () => {
+    AppState.freeCounter = 0; 
+    document.getElementById("freeCounter").innerText = 0;
+    
+    // تحديث إجمالي اليوم للذكر الجديد اللي تم اختياره
+    const allKeys = Object.keys(localStorage).filter(k => k.startsWith(`tasbeeh_${AppState.today}_`));
+    const total = allKeys.reduce((s,k) => s + (parseInt(localStorage.getItem(k))||0), 0);
+    document.getElementById("tasbeehTodayCount").innerText = `تسبيحاتك اليوم: ${total}`;
 });
 document.getElementById("btnResetTasbeeh").addEventListener("click", () => { AppState.freeCounter=0; document.getElementById("freeCounter").innerText=0; });
 
@@ -294,7 +305,9 @@ async function createGroup() {
         AppState.myGroupCode = code; AppState.myName = name; 
         localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
         showLeaderboard(); showMiniToast(`✅ الجروب اتعمل! كوده: ${code}`);
-    } catch (e) {
+  } catch (e) {
+        // السطر ده هيظهرلك رسالة بالخطأ الحقيقي اللي جاي من السيرفر
+        alert("تفاصيل الخطأ من Supabase: " + e.message); 
         showMiniToast(`⚠️ مشكلة في الاتصال بالانترنت!`);
         setGroupStatus("");
     }
@@ -470,7 +483,11 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 document.getElementById('installBtn').addEventListener('click', async () => { 
-    if (!deferredPrompt) return; 
+    if (!deferredPrompt) {
+        // لو المستخدم آيفون أو المتصفح مش داعم، نعرضله رسالة
+        showMiniToast("على الآيفون: اضغط زر المشاركة بالأسفل ⍗ ثم Add to Home Screen 📱");
+        return;
+    } 
     deferredPrompt.prompt(); 
     const { outcome } = await deferredPrompt.userChoice; 
     if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; 
