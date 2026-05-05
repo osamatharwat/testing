@@ -5,20 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>حصنك اليومي ✨</title>
   <link rel="manifest" href="./manifest.json"/>
-  <meta name="theme-color" content="#020617"/>
+  <meta name="theme-color" content="#05070c"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="حصنك"/>
-  <link rel="apple-touch-icon" href="./icons/icon-192x192.png"/>
-  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png"/>
-  <meta name="description" content="تطبيق أذكار الصباح والمساء اليومية"/>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
   
-  <!-- ربط ملف التصميم -->
   <link rel="stylesheet" href="style.css" />
-  
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -27,21 +21,18 @@
   <!-- HEADER -->
   <div class="header">
     <div class="logo">حصنك اليومي ✨</div>
-    <button id="installBtn">📲 نزّل التطبيق</button>
-    <div id="iosHint">📱 Safari → <strong>□↑</strong> → <strong>Add to Home Screen</strong></div>
+    <button id="installBtn">📲 نزّل التطبيق (Add to Home Screen)</button>
   </div>
 
   <!-- SADAQA -->
   <div class="sadaqa-box">
     <div class="sadaqa-label">🤍 صدقة جارية على أرواح</div>
-    <div class="sadaqa-scroll" id="sadaqaScroll">
-      <!-- يتم توليد الكروت هنا من الجافاسكريبت -->
-    </div>
+    <div class="sadaqa-scroll" id="sadaqaScroll"></div>
   </div>
 
   <!-- QUOTE -->
   <div class="quote-box" id="quoteBox">
-    <div id="quote"></div>
+    <div id="quote">جاري التحميل...</div>
     <div class="share-hint">👆 اضغط للمشاركة</div>
   </div>
 
@@ -55,7 +46,7 @@
   <div class="home-lb" id="homeLB">
     <div class="home-lb-title">🏆 جروبك هذا الأسبوع</div>
     <div id="homeLBRows"></div>
-    <div style="text-align:center;margin-top:6px;font-size:11px;color:#64748b;">اضغط تحدي الجروب لمزيد من التفاصيل</div>
+    <div style="text-align:center;margin-top:6px;font-size:11px;color:#94a3b8;">اضغط تحدي الجروب لمزيد من التفاصيل</div>
   </div>
 
   <!-- SADAQA SHARE -->
@@ -70,7 +61,7 @@
     <button class="alert-close">✕</button>
     <div class="alert-title">📖 يوم الجمعة المبارك 🕌</div>
     <div class="alert-sub">سورة الكهف نور بين الجمعتين ✨
-      <button id="btnAlertKahf" style="margin-top:7px;background:linear-gradient(135deg,#10b981,#065f46);border:none;color:white;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif;display:block;">اقرأها دلوقتي 📖</button>
+      <button id="btnAlertKahf" style="margin-top:7px;background:linear-gradient(135deg,#10b981,#065f46);border:none;color:white;padding:7px 14px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;">اقرأها دلوقتي 📖</button>
     </div>
   </div>
   <div class="alert-banner morning-alert" id="morningBanner">
@@ -96,32 +87,25 @@
     </div>
   </div>
 
-  <!-- MODE GRID -->
   <!-- MODE GRID (WIDGET STYLE) -->
   <div class="mode-grid">
     <button class="mode-btn morning" id="btnMorning">
-      <span class="btn-icon">🌅</span>
-      <span class="btn-text">أذكار الصباح</span>
+      <span class="btn-icon">🌅</span><span class="btn-text">أذكار الصباح</span>
     </button>
     <button class="mode-btn evening" id="btnEvening">
-      <span class="btn-icon">🌙</span>
-      <span class="btn-text">أذكار المساء</span>
+      <span class="btn-icon">🌙</span><span class="btn-text">أذكار المساء</span>
     </button>
     <button class="mode-btn quick" id="btnQuick">
-      <span class="btn-icon">⚡</span>
-      <span class="btn-text">الورد المختصر</span>
+      <span class="btn-icon">⚡</span><span class="btn-text">الورد المختصر</span>
     </button>
     <button class="mode-btn tasbeeh" id="btnTasbeehMode">
-      <span class="btn-icon">📿</span>
-      <span class="btn-text">التسبيح الحر</span>
+      <span class="btn-icon">📿</span><span class="btn-text">التسبيح الحر</span>
     </button>
     <button class="mode-btn kahf-btn" id="btnKahfMode">
-      <span class="btn-icon">📖</span>
-      <span class="btn-text">سورة الكهف</span>
+      <span class="btn-icon">📖</span><span class="btn-text">سورة الكهف</span>
     </button>
     <button class="mode-btn group-btn" id="btnGroupMode">
-      <span class="btn-icon">🏆</span>
-      <span class="btn-text">تحدي الجروب</span>
+      <span class="btn-icon">🏆</span><span class="btn-text">تحدي الجروب</span>
     </button>
   </div>
 
@@ -145,7 +129,7 @@
   <div class="card tasbeeh-area" id="tasbeehArea">
     <div class="tasbeeh-header">
       <h3>📿 التسبيح الحر</h3>
-      <div style="font-size:12px;color:#64748b;" id="tasbeehDateLabel"></div>
+      <div style="font-size:12px;color:#94a3b8;" id="tasbeehDateLabel"></div>
     </div>
     <div class="tasbeeh-today" id="tasbeehTodayCount">تسبيحاتك اليوم: 0</div>
     <select class="tasbeeh-select" id="tasbeehSelect">
@@ -161,7 +145,7 @@
       <button class="btn main-btn" id="btnIncreaseTasbeeh">📿 سبح</button>
       <button class="tasbeeh-reset-btn" id="btnResetTasbeeh">↩ صفر</button>
     </div>
-    <button class="btn btn-close-section" style="background:rgba(255,255,255,.05);margin-top:8px;">↩ رجوع</button>
+    <button class="btn btn-close-section" style="margin-top:12px;">↩ رجوع</button>
   </div>
 
   <!-- KAHF AREA -->
@@ -185,11 +169,10 @@
         <div id="kahfDone" style="display:none;text-align:center;padding:16px;">
           <div style="font-size:54px;">🌟</div>
           <div style="font-size:18px;font-weight:900;color:#6ee7b7;margin:10px 0 5px;">أتممت سورة الكهف!</div>
-          <div style="font-size:12px;color:#64748b;margin-bottom:14px;line-height:1.7;">جعلها الله نوراً لك بين الجمعتين 🤍</div>
           <button class="btn main-btn" style="margin-bottom:8px;" id="btnShareKahf">📤 شارك إنجازك</button>
-          <button class="btn" style="background:rgba(255,255,255,.06);" id="btnRestartKahf">🔄 اقرأها مرة ثانية</button>
+          <button class="btn btn-close-section" id="btnRestartKahf">🔄 اقرأها مرة ثانية</button>
         </div>
-        <button class="kahf-back btn-close-section">↩ رجوع للرئيسية</button>
+        <button class="btn btn-close-section" style="margin-top:12px; width: 100%;">↩ رجوع للرئيسية</button>
       </div>
     </div>
   </div>
@@ -198,7 +181,7 @@
   <div class="group-area" id="groupArea">
     <div class="group-setup" id="groupSetup">
       <h3>🏆 تحدي الجروب</h3>
-      <p style="font-size:12px;color:#64748b;text-align:center;margin-bottom:12px;line-height:1.7;">أنشئ جروب وابعت الكود لأصحابك...</p>
+      <p style="font-size:12px;color:#94a3b8;text-align:center;margin-bottom:12px;">أنشئ جروب وابعت الكود لأصحابك...</p>
       <input class="group-input" id="nameInput" placeholder="اسمك في الجروب..." maxlength="20"/>
       <div class="group-btn-row">
         <button class="group-create-btn" id="btnCreateGroup">✨ أنشئ جروب جديد</button>
@@ -217,34 +200,33 @@
         <div class="lb-code" id="groupCodeDisplay">📋 الكود</div>
       </div>
       <div class="lb-week" id="lbWeekInfo">📅 تحدي الأسبوع</div>
-      <div id="lbRows"><div class="group-loading">⏳ جاري التحميل...</div></div>
-      <button class="group-share-btn" id="btnShareGroup">📤 ادعو أصحابك للتحدي</button>
-      <button class="btn" style="background:rgba(255,255,255,.05);margin-top:7px;" id="btnLeaveGroup">🚪 اخرج من الجروب</button>
+      <div id="lbRows"><div style="text-align:center; color:#94a3b8; padding: 10px;">⏳ جاري التحميل...</div></div>
+      <button class="sadaqa-share-btn" style="margin-top:12px;" id="btnShareGroup">📤 ادعو أصحابك للتحدي</button>
+      <button class="btn btn-close-section" style="margin-top:7px;" id="btnLeaveGroup">🚪 اخرج من الجروب</button>
     </div>
-    <button class="btn btn-close-section" style="background:rgba(255,255,255,.05);margin-top:8px;margin-bottom:12px;">↩ رجوع للرئيسية</button>
+    <button class="btn btn-close-section" style="margin-top:12px; width: 100%;">↩ رجوع للرئيسية</button>
   </div>
 
   <!-- FINISH -->
-  <div class="finish" id="finish">
-    <h2>🏆 أحسنت</h2>
-    <p id="finishText">تم إنهاء الورد اليومي 🌿</p>
-    <div class="finish-next-hint" id="nextHint"></div>
-    <button class="btn main-btn" style="margin-top:12px;" id="btnShareFinish">📤 شارك إنجازك وكمّل الصدقة</button>
+  <div class="finish card" id="finish">
+    <h2 style="text-align:center; margin-bottom:10px;">🏆 أحسنت</h2>
+    <p id="finishText" style="text-align:center; font-size:16px;">تم إنهاء الورد اليومي 🌿</p>
+    <div id="nextHint" style="text-align:center; margin:15px 0; color:#fde68a; font-size:14px;"></div>
+    <button class="btn main-btn" id="btnShareFinish">📤 شارك إنجازك وكمّل الصدقة</button>
+    <button class="btn btn-close-section" style="margin-top:10px; width:100%;">↩ رجوع للرئيسية</button>
   </div>
 
   <!-- POPULAR DUAS -->
   <div class="dua-box">
-    <div class="dua-title">🤲 الأدعية المشهورة</div>
-    <div class="dua-grid" id="duaGrid">
-      <!-- يتم توليد الأدعية هنا من الجافاسكريبت -->
-    </div>
+    <div class="sadaqa-label">🤲 الأدعية المشهورة</div>
+    <div class="dua-grid" id="duaGrid"></div>
   </div>
   
-  <div class="footer">شارك التطبيق تؤجر عليه ❤️</div>
+  <div style="text-align:center; margin-top:16px; color:#94a3b8; font-size:12px; padding-bottom:80px;">شارك التطبيق تؤجر عليه ❤️</div>
 </div>
 
 <!-- MASCOT -->
-<div class="floating-mascot">
+<div class="floating-mascot" id="mascotBtn">
   <div class="mascot">🐥</div>
   <div class="speech" id="speech">جاهز تبدأ وردك؟ 🌿</div>
 </div>
@@ -252,31 +234,29 @@
 <!-- CELEBRATION -->
 <div class="celebration-overlay" id="celebOverlay">
   <div class="celebration-box">
-    <div class="confetti-wrap" id="confettiWrap"></div>
     <div class="celebration-mascot">🐥</div>
     <div class="celebration-title" id="celebTitle">أشطر كتكوت! 🏆</div>
-    <div class="celebration-msg" id="celebMsg"></div>
-    <button class="celebration-btn" id="btnCloseCelebration">يلا نكمل ✨</button>
+    <div class="celebration-msg" id="celebMsg" style="color:#e2e8f0; margin-bottom:15px;"></div>
+    <button class="btn main-btn" id="btnCloseCelebration">يلا نكمل ✨</button>
   </div>
 </div>
 
 <!-- SHARE MODAL -->
 <div class="share-modal" id="shareModal">
   <div class="share-sheet">
-    <h3 id="shareModalTitle">شارك على</h3>
+    <h3 id="shareModalTitle" style="text-align:center; margin-bottom:15px;">شارك على</h3>
     <div class="share-btns">
-      <button class="share-platform-btn s-whatsapp" data-platform="whatsapp"><span class="ico">💬</span>واتساب</button>
-      <button class="share-platform-btn s-facebook" data-platform="facebook"><span class="ico">📘</span>فيسبوك</button>
-      <button class="share-platform-btn s-instagram" data-platform="instagram"><span class="ico">📸</span>انستجرام</button>
-      <button class="share-platform-btn s-twitter" data-platform="twitter"><span class="ico">𝕏</span>منصة X</button>
-      <button class="share-platform-btn s-copy" data-platform="copy"><span class="ico">📋</span>نسخ</button>
-      <button class="share-platform-btn s-native" data-platform="native"><span class="ico">📤</span>أكثر</button>
+      <button class="share-platform-btn s-whatsapp" data-platform="whatsapp">💬 واتساب</button>
+      <button class="share-platform-btn s-facebook" data-platform="facebook">📘 فيسبوك</button>
+      <button class="share-platform-btn s-instagram" data-platform="instagram">📸 انستجرام</button>
+      <button class="share-platform-btn s-twitter" data-platform="twitter">𝕏 منصة X</button>
+      <button class="share-platform-btn s-copy" data-platform="copy">📋 نسخ</button>
+      <button class="share-platform-btn s-native" data-platform="native">📤 أكثر</button>
     </div>
-    <button class="share-cancel" id="btnCloseShare">إلغاء</button>
+    <button class="btn btn-close-section" style="width:100%; margin-top:10px;" id="btnCloseShare">إلغاء</button>
   </div>
 </div>
 
-<!-- ربط ملفات الجافاسكريبت بالترتيب -->
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>
