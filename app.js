@@ -238,13 +238,31 @@ function finishZekr() {
     setTimeout(() => showCelebration('ممتاز!', cel), 300);
 }
 function openDua(type) {
-    const dua = duas[type]; if (!dua) return;
-    hideAll(); DOM.card.style.display = "block";
-    AppState.currentModeName = 'dua'; AppState.currentMode = [{title: "🤲 دعاء", text: dua.text, fadl: dua.ref, repeat: 1}];
-    AppState.currentIndex = 0; AppState.currentCount = 0; AppState.xp = 0; AppState.combo = 0;
-    loadZekr(); goTo("card");
+    const duaListForType = duas[type]; 
+    if (!duaListForType || duaListForType.length === 0) return;
+    
+    hideAll(); 
+    DOM.card.style.display = "block";
+    AppState.currentModeName = 'dua'; 
+    
+    // تحويل مصفوفة الأدعية لتتناسب مع الكروت زي أذكار الصباح بالظبط
+    AppState.currentMode = duaListForType.map((dua, index) => {
+        return {
+            title: `🤲 دعاء (${index + 1} / ${duaListForType.length})`, 
+            text: dua.text, 
+            fadl: dua.ref, 
+            repeat: dua.repeat || 1
+        };
+    });
+    
+    AppState.currentIndex = 0; 
+    AppState.currentCount = 0; 
+    AppState.xp = 0; 
+    AppState.combo = 0;
+    
+    loadZekr(); 
+    goTo("card");
 }
-
 /* ================================================================
    7. TASBEEH & KAHF
 ================================================================ */
