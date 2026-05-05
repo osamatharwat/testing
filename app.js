@@ -102,6 +102,11 @@ document.addEventListener("DOMContentLoaded", () => {
     bindEvents();
     DOM.quote.innerText = AppState.currentQuote;
     if(AppState.notifEnabled) startNotifLoop();
+    
+    // 👈 السطرين دول هما اللي بيجيبوا بيانات الجروب ويعرضوها في الهوم أوتوماتيك
+    if (AppState.myGroupCode) {
+        renderLeaderboard();
+    }
 });
 
 function renderDynamicLists() {
