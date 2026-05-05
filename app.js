@@ -1,749 +1,243 @@
-/* ================================================================
-   1. STATE MANAGEMENT (إدارة الحالة)
-================================================================ */
+const SUPABASE_URL = 'https://ddqiiybuaozsjlrnckfz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_rzftsvyC9ahQTXW-Pq4BsA_EOTSY5kP';
+
 const AppState = {
     today: new Date().toDateString(),
     streak: parseInt(localStorage.getItem("streak")) || 0,
     completedToday: false,
-    
-    // Zekr State
-    currentMode: [],
-    currentModeName: '',
-    currentIndex: 0,
-    currentCount: 0,
-    xp: 0,
-    combo: 0,
-    halfwayShown: false,
-    
-    // Tasbeeh State
+    currentMode: [], currentModeName: '', currentIndex: 0, currentCount: 0, xp: 0, combo: 0, halfwayShown: false,
     freeCounter: 0,
-    
-    // Kahf State
     kahfIndex: parseInt(localStorage.getItem("kahfIndex") || "0"),
-    
-    // Group State
     myGroupCode: localStorage.getItem("myGroupCode") || null,
     myName: localStorage.getItem("myName") || null,
     myUserId: localStorage.getItem("myUserId") || ('u' + Math.random().toString(36).substr(2,8)),
-    
-    // Settings
     notifEnabled: localStorage.getItem("notifEnabled") === "true",
     notifInterval: null,
     currentQuote: quotes[Math.floor(Math.random() * quotes.length)],
     shareContext: 'quote'
 };
 
-// Initialize variables that need calculations
 AppState.completedToday = localStorage.getItem("completedToday") === AppState.today;
 localStorage.setItem("myUserId", AppState.myUserId);
 
-/* ================================================================
-   2. DOM CACHING (تخزين عناصر الواجهة)
-================================================================ */
 const DOM = {
-    // Containers
-    sadaqaScroll: document.getElementById("sadaqaScroll"),
-    duaGrid: document.getElementById("duaGrid"),
+    sadaqaScroll: document.getElementById("sadaqaScroll"), duaGrid: document.getElementById("duaGrid"),
     sections: ['card', 'tasbeehArea', 'kahfArea', 'groupArea', 'finish'].map(id => document.getElementById(id)),
-    
-    // Texts & Stats
-    quote: document.getElementById("quote"),
-    streakBadge: document.getElementById("streak"),
-    streakWarning: document.getElementById("streakWarning"),
-    speech: document.getElementById("speech"),
-    inlineSpeech: document.getElementById("inlineSpeech"),
-    xp: document.getElementById("xp"),
-    combo: document.getElementById("combo"),
-    
-    // Zekr Elements
-    zekrTitle: document.getElementById("zekrTitle"),
-    zekrText: document.getElementById("zekrText"),
-    zekrFadl: document.getElementById("zekrFadl"),
-    repeat: document.getElementById("repeat"),
-    counter: document.getElementById("counter"),
-    progress: document.getElementById("progress"),
-    
-    // Buttons (Modes & Main)
-    btnMorning: document.getElementById("btnMorning"),
-    btnEvening: document.getElementById("btnEvening"),
-    btnQuick: document.getElementById("btnQuick"),
-    btnTasbeehMode: document.getElementById("btnTasbeehMode"),
-    btnKahfMode: document.getElementById("btnKahfMode"),
-    btnGroupMode: document.getElementById("btnGroupMode"),
-    btnCountZekr: document.getElementById("btnCountZekr"),
-    btnBacks: document.querySelectorAll('.btn-close-section'),
-    
-    // Modals
-    shareModal: document.getElementById("shareModal"),
-    celebOverlay: document.getElementById("celebOverlay"),
-    celebTitle: document.getElementById("celebTitle"),
-    celebMsg: document.getElementById("celebMsg"),
-    confettiWrap: document.getElementById("confettiWrap")
+    quote: document.getElementById("quote"), streakBadge: document.getElementById("streak"), streakWarning: document.getElementById("streakWarning"),
+    speech: document.getElementById("speech"), inlineSpeech: document.getElementById("inlineSpeech"),
+    xp: document.getElementById("xp"), combo: document.getElementById("combo"),
+    zekrTitle: document.getElementById("zekrTitle"), zekrText: document.getElementById("zekrText"), zekrFadl: document.getElementById("zekrFadl"),
+    repeat: document.getElementById("repeat"), counter: document.getElementById("counter"), progress: document.getElementById("progress"),
+    btnMorning: document.getElementById("btnMorning"), btnEvening: document.getElementById("btnEvening"), btnQuick: document.getElementById("btnQuick"),
+    btnTasbeehMode: document.getElementById("btnTasbeehMode"), btnKahfMode: document.getElementById("btnKahfMode"), btnGroupMode: document.getElementById("btnGroupMode"),
+    btnCountZekr: document.getElementById("btnCountZekr"), btnBacks: document.querySelectorAll('.btn-close-section'),
+    shareModal: document.getElementById("shareModal"), celebOverlay: document.getElementById("celebOverlay"), celebTitle: document.getElementById("celebTitle"), celebMsg: document.getElementById("celebMsg")
 };
 
-/* ================================================================
-   3. INITIALIZATION & EVENTS (بدء التشغيل)
-================================================================ */
 document.addEventListener("DOMContentLoaded", () => {
-    initStreak();
-    renderDynamicLists();
-    bindEvents();
-    
+    initStreak(); renderDynamicLists(); bindEvents();
     DOM.quote.innerText = AppState.currentQuote;
 });
 
 function renderDynamicLists() {
-    // Render Sadaqa
     let sadaqaHtml = '';
-    sadaqaList.forEach(person => {
-        sadaqaHtml += `<div class="sadaqa-card"><div class="icon">🕊️</div><div class="name">${person.name}</div><div class="role">${person.role}</div></div>`;
-    });
+    sadaqaList.forEach(p => { sadaqaHtml += `<div class="sadaqa-card"><div class="icon">🕊️</div><div class="name">${p.name}</div><div class="role">${p.role}</div></div>`; });
     DOM.sadaqaScroll.innerHTML = sadaqaHtml;
 
-    // Render Duas
     let duaHtml = '';
-    duaList.forEach(dua => {
-        duaHtml += `<div class="dua-card" data-duatype="${dua.id}"><div class="dua-name">${dua.name}</div></div>`;
-    });
+    duaList.forEach(d => { duaHtml += `<div class="dua-card" data-duatype="${d.id}"><div class="dua-name">${d.name}</div></div>`; });
     DOM.duaGrid.innerHTML = duaHtml;
 
-    // Add events to dynamic Duas
-    document.querySelectorAll('.dua-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            const type = e.currentTarget.getAttribute('data-duatype');
-            openDua(type);
-        });
-    });
+    document.querySelectorAll('.dua-card').forEach(c => c.addEventListener('click', (e) => openDua(e.currentTarget.getAttribute('data-duatype'))));
 }
 
 function bindEvents() {
-    // Modes
     DOM.btnMorning.addEventListener("click", () => startMode('morning'));
     DOM.btnEvening.addEventListener("click", () => startMode('evening'));
     DOM.btnQuick.addEventListener("click", () => startMode('quick'));
     DOM.btnTasbeehMode.addEventListener("click", openTasbeeh);
     DOM.btnKahfMode.addEventListener("click", openKahf);
     DOM.btnGroupMode.addEventListener("click", openGroup);
-    
-    // Zekr Action
     DOM.btnCountZekr.addEventListener("click", countZekr);
-    
-    // Back Buttons
     DOM.btnBacks.forEach(btn => btn.addEventListener("click", closeSection));
 
-    // Share & Celebrate
     document.getElementById("btnCloseShare").addEventListener("click", closeShareModal);
     document.getElementById("btnCloseCelebration").addEventListener("click", closeCelebration);
     
-    // Add Share events
     document.getElementById("quoteBox").addEventListener("click", () => openShareModal('quote'));
     document.getElementById("btnShareSadaqa").addEventListener("click", () => openShareModal('sadaqa'));
     document.getElementById("btnShareFinish").addEventListener("click", () => openShareModal('finish'));
+    document.getElementById("btnShareGroup").addEventListener("click", () => openShareModal('group'));
     
-    document.querySelectorAll('.share-platform-btn').forEach(btn => {
-        btn.addEventListener("click", (e) => doShare(e.currentTarget.getAttribute('data-platform')));
+    document.querySelectorAll('.share-platform-btn').forEach(btn => btn.addEventListener("click", (e) => doShare(e.currentTarget.getAttribute('data-platform'))));
+    document.querySelectorAll('.alert-close').forEach(btn => btn.addEventListener('click', (e) => e.target.parentElement.classList.remove('show')));
+
+    // Mascot Interaction
+    document.getElementById("mascotBtn").addEventListener("click", () => {
+        navigator.vibrate?.(30);
+        setSpeech(motiv[Math.floor(Math.random() * motiv.length)]);
     });
-
-    // Alert closes
-    document.querySelectorAll('.alert-close').forEach(btn => {
-        btn.addEventListener('click', (e) => e.target.parentElement.classList.remove('show'));
-    });
 }
 
-/* ================================================================
-   4. CORE UI FUNCTIONS
-================================================================ */
-function hideAll() {
-    DOM.sections.forEach(sec => sec.style.display = 'none');
-    document.body.className = '';
-}
-
-function closeSection() {
-    hideAll();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function setSpeech(t) {
-    DOM.speech.innerText = t;
-    DOM.inlineSpeech.innerText = t;
-}
-
-function goTo(id) {
-    setTimeout(() => document.getElementById(id).scrollIntoView({ behavior: "smooth" }), 80);
-}
+function hideAll() { DOM.sections.forEach(s => s.style.display = 'none'); document.body.className = ''; }
+function closeSection() { hideAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function setSpeech(t) { DOM.speech.innerText = t; DOM.inlineSpeech.innerText = t; }
+function goTo(id) { setTimeout(() => document.getElementById(id).scrollIntoView({ behavior: "smooth" }), 80); }
 
 function showMiniToast(msg) {
     let t = document.getElementById("miniToast");
-    if (!t) {
-        t = document.createElement("div");
-        t.id = "miniToast";
-        t.style.cssText = `position:fixed;top:18px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#f59e0b,#ea580c);color:white;padding:11px 18px;border-radius:50px;font-size:13px;font-weight:800;font-family:'Cairo',sans-serif;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;transition:.35s;max-width:86vw;text-align:center;`;
-        document.body.appendChild(t);
-    }
-    t.innerText = msg;
-    t.style.opacity = '1';
-    setTimeout(() => t.style.opacity = '0', 3000);
+    if (!t) { t = document.createElement("div"); t.id = "miniToast"; t.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#10b981;color:white;padding:12px 20px;border-radius:50px;font-size:13px;font-weight:800;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.4);opacity:0;transition:.3s;text-align:center;`; document.body.appendChild(t); }
+    t.innerText = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 3000);
 }
 
-/* ================================================================
-   5. STREAK LOGIC
-================================================================ */
 function initStreak() {
     let storedLast = localStorage.getItem("lastVisit");
     if (storedLast !== AppState.today) {
         const y = new Date(); y.setDate(y.getDate() - 1);
-        if (storedLast === y.toDateString()) AppState.streak++;
-        else AppState.streak = 1;
-        
-        localStorage.setItem("lastVisit", AppState.today);
-        localStorage.setItem("streak", AppState.streak);
+        if (storedLast === y.toDateString()) AppState.streak++; else AppState.streak = 1;
+        localStorage.setItem("lastVisit", AppState.today); localStorage.setItem("streak", AppState.streak);
     }
     DOM.streakBadge.innerText = AppState.streak;
-
-    if (!AppState.completedToday) {
-        const h = new Date().getHours();
-        if (h >= 18) DOM.streakWarning.style.display = "block";
-    }
+    if (!AppState.completedToday && new Date().getHours() >= 18) DOM.streakWarning.style.display = "block";
 }
 
-/* ================================================================
-   6. ZEKR ENGINE
-================================================================ */
 function startMode(mode) {
-    hideAll();
-    AppState.currentModeName = mode;
-    
-    if (mode === 'morning') { document.body.classList.add("morning-theme"); setSpeech("صباح الأذكار نور ☀️"); }
+    hideAll(); AppState.currentModeName = mode;
+    if (mode === 'morning') { document.body.classList.add("morning-theme"); setSpeech("صباح الأذكار ☀️"); }
     if (mode === 'evening') { document.body.classList.add("evening-theme"); setSpeech("سكينة المساء 🌙"); }
-    if (mode === 'quick')   { document.body.classList.add("quick-theme"); setSpeech("ورد بسيط وأجر كبير ✨"); }
-    
-    document.getElementById("card").style.display = "block";
-    
-    AppState.currentMode = data[mode];
-    AppState.currentIndex = 0;
-    AppState.currentCount = 0;
-    AppState.xp = 0;
-    AppState.combo = 0;
-    AppState.halfwayShown = false;
-    
-    loadZekr();
-    goTo("card");
+    if (mode === 'quick')   { document.body.classList.add("quick-theme"); setSpeech("ورد بسيط ✨"); }
+    DOM.card.style.display = "block";
+    AppState.currentMode = data[mode]; AppState.currentIndex = 0; AppState.currentCount = 0; AppState.xp = 0; AppState.combo = 0; AppState.halfwayShown = false;
+    loadZekr(); goTo("card");
 }
 
 function loadZekr() {
     const item = AppState.currentMode[AppState.currentIndex];
-    DOM.zekrTitle.innerText = item.title;
-    DOM.zekrText.innerText = item.text;
-    
-    if (item.fadl) {
-        DOM.zekrFadl.innerText = "✦ " + item.fadl;
-        DOM.zekrFadl.style.display = 'block';
-    } else {
-        DOM.zekrFadl.style.display = 'none';
-    }
-    
-    DOM.repeat.innerText = item.repeat;
-    DOM.counter.innerText = `${AppState.currentCount}/${item.repeat}`;
-    updateProgress();
+    DOM.zekrTitle.innerText = item.title; DOM.zekrText.innerText = item.text;
+    if (item.fadl) { DOM.zekrFadl.innerText = "✦ " + item.fadl; DOM.zekrFadl.style.display = 'block'; } else DOM.zekrFadl.style.display = 'none';
+    DOM.repeat.innerText = item.repeat; DOM.counter.innerText = `${AppState.currentCount}/${item.repeat}`;
+    DOM.progress.style.width = (AppState.currentIndex / AppState.currentMode.length * 100) + "%";
 }
 
 function countZekr() {
     navigator.vibrate?.(35);
     const item = AppState.currentMode[AppState.currentIndex];
-    
-    AppState.currentCount++;
-    AppState.xp += 5;
-    AppState.combo++;
-    
-    DOM.xp.innerText = AppState.xp;
-    DOM.combo.innerText = AppState.combo;
-    DOM.counter.innerText = `${AppState.currentCount}/${item.repeat}`;
-    
-    DOM.counter.classList.add("glow");
-    setTimeout(() => DOM.counter.classList.remove("glow"), 280);
+    AppState.currentCount++; AppState.xp += 5; AppState.combo++;
+    DOM.xp.innerText = AppState.xp; DOM.combo.innerText = AppState.combo; DOM.counter.innerText = `${AppState.currentCount}/${item.repeat}`;
     setSpeech(motiv[Math.floor(Math.random() * motiv.length)]);
 
     if (AppState.currentCount >= item.repeat) {
-        AppState.currentIndex++;
-        AppState.currentCount = 0;
-        
-        if (AppState.currentIndex >= AppState.currentMode.length) {
-            finishZekr();
-        } else {
-            const half = Math.floor(AppState.currentMode.length / 2);
-            if (AppState.currentIndex === half || AppState.currentIndex === AppState.currentMode.length) {
-                showCelebration(`أتممت: ${AppState.currentMode[AppState.currentIndex-1].title} 🤍`, 'يلا نكمل الباقي 💪');
-                setTimeout(() => { closeCelebration(); loadZekr(); }, 2200);
-            } else {
-                loadZekr();
-            }
-        }
-    }
-}
-
-function updateProgress() {
-    DOM.progress.style.width = (AppState.currentIndex / AppState.currentMode.length * 100) + "%";
-    const half = Math.floor(AppState.currentMode.length / 2);
-    if (AppState.currentIndex === half && AppState.currentCount === 0 && !AppState.halfwayShown) {
-        AppState.halfwayShown = true;
-        showMiniToast("يلا يا بطل! قطعنا نص المسافة 💪🔥");
-        setSpeech("نص الطريق! كمّل 🌿");
+        AppState.currentIndex++; AppState.currentCount = 0;
+        if (AppState.currentIndex >= AppState.currentMode.length) finishZekr();
+        else loadZekr();
     }
 }
 
 function finishZekr() {
-    localStorage.setItem("completedToday", AppState.today);
-    AppState.completedToday = true;
-    DOM.streakWarning.style.display = "none";
-    document.getElementById("card").style.display = "none";
-    document.getElementById("finish").style.display = "block";
-    
-    let cel = '', hint = '';
-    if (AppState.currentModeName === 'morning') { cel = 'أشطر كتكوت! خلصت ورد الصباح 🌅'; hint = '🌙 في انتظارك أذكار المساء عشان يكتمل حصنك!'; }
-    else if (AppState.currentModeName === 'evening') { cel = 'أشطر كتكوت! خلصت ورد المساء 🌙'; hint = '☀️ نراك بكره في أذكار الصباح!'; }
-    else { cel = 'أشطر كتكوت! خلصت الورد المختصر ⚡'; hint = '🌅 جرّب أذكار الصباح أو المساء للحصن الكامل!'; }
-    
-    document.getElementById("nextHint").innerText = hint;
-
-    // السطر ده هو اللي ضفناه عشان يبعت التحديث للجروب
-    updateMyGroupStreak(); 
-
-    setTimeout(() => showCelebration('أشطر كتكوت كده خلصنا! 🏆', cel), 300);
+    if(AppState.currentModeName !== 'dua') {
+        localStorage.setItem("completedToday", AppState.today); AppState.completedToday = true;
+        DOM.streakWarning.style.display = "none";
+        updateMyGroupStreak();
+    }
+    DOM.card.style.display = "none"; document.getElementById("finish").style.display = "block";
+    let cel = AppState.currentModeName==='dua' ? 'تقبل الله دعاءك 🤲' : 'أشطر كتكوت خلص ورده! 🏆';
+    setTimeout(() => showCelebration('ممتاز!', cel), 300);
 }
 
-/* ================================================================
-   7. DUAS FEATURE
-================================================================ */
 function openDua(type) {
-    const dua = duas[type];
-    if (!dua) return;
-
-    hideAll(); // إخفاء باقي الشاشات
-    document.body.className = ''; // مسح أي ثيم قديم
-    DOM.card.style.display = "block"; // إظهار كارت الأذكار
-
-    // إقناع النظام إن الدعاء ده هو الورد الحالي
-    AppState.currentModeName = 'dua';
-    AppState.currentMode = [{
-        title: "🤲 دعاء",
-        text: dua.text,
-        fadl: dua.ref,
-        repeat: 1 // تكرار مرة واحدة
-    }];
-    
-    // تصفير العدادات
-    AppState.currentIndex = 0;
-    AppState.currentCount = 0;
-    AppState.xp = 0;
-    AppState.combo = 0;
-
-    loadZekr();
-    goTo("card");
-}
-/* ================================================================
-   8. SHARE MODAL (المشاركة)
-================================================================ */
-function getShareText(ctx){
-    if(ctx==='quote') return `✨ حصنك اليومي ✨\n\n"${AppState.currentQuote}"\n\n📲 ${APP_URL}`;
-    if(ctx==='sadaqa') return `🤍 صدقة جارية على أرواح خالد آدم وعمرو خالد ومحمود فوزي وغيرهم 🤍\n\nشارك معايا تطبيق حصنك اليومي للأذكار 🌿\n\n📲 ${APP_URL}\n\nكل ما حد بيستخدمه بيجي الأجر عليهم وعليك ✨`;
-    if(ctx==='finish') return `🏆 خلصت وردي اليومي في حصنك اليومي!\n🔥 الاستريك: ${AppState.streak} يوم\n\n"${AppState.currentQuote}"\n\n📲 ${APP_URL} 🤍`;
-    if(ctx==='kahf') return `📖 أتممت سورة الكهف كاملة النهارده 🌟\n\nسورة الكهف نور بين الجمعتين ✨\n\n📲 ${APP_URL}`;
-    if(ctx==='group') return `🏆 يا جماعة! انضموا لتحدي الأذكار معايا!\n\nكود الجروب: ${AppState.myGroupCode||'------'}\n\n📲 ${APP_URL}\nاضغط "تحدي الجروب" وادخل الكود 🌿`;
-    return `✨ حصنك اليومي\n📲 ${APP_URL}`;
+    const dua = duas[type]; if (!dua) return;
+    hideAll(); DOM.card.style.display = "block";
+    AppState.currentModeName = 'dua'; AppState.currentMode = [{title: "🤲 دعاء", text: dua.text, fadl: dua.ref, repeat: 1}];
+    AppState.currentIndex = 0; AppState.currentCount = 0; AppState.xp = 0; AppState.combo = 0;
+    loadZekr(); goTo("card");
 }
 
-function openShareModal(ctx){
-    AppState.shareContext=ctx;
-    document.getElementById("shareModalTitle").innerText = ctx==='quote'?'شارك الاقتباس':ctx==='group'?'ادعو أصحابك':'شارك على';
-    document.getElementById("shareModal").classList.add("show");
-}
-
-function closeShareModal(e){
-    if(!e || e.target===document.getElementById("shareModal"))
-        document.getElementById("shareModal").classList.remove("show");
-}
-
-function doShare(platform){
-    const txt = getShareText(AppState.shareContext);
-    const enc = encodeURIComponent(txt);
-    const urls = {
-        whatsapp:`https://wa.me/?text=${enc}`,
-        facebook:`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(APP_URL)}&quote=${enc}`,
-        twitter:`https://twitter.com/intent/tweet?text=${enc}`
-    };
-    if(platform==='copy'){
-        navigator.clipboard?.writeText(txt).then(()=>showMiniToast("✅ النص اتنسخ!"));
-        closeShareModal();return;
-    }
-    if(platform==='instagram'){
-        navigator.clipboard?.writeText(txt).then(()=>showMiniToast("✅ النص اتنسخ — افتح انستجرام والصقه!"));
-        closeShareModal();return;
-    }
-    if(platform==='native'){
-        if(navigator.share) navigator.share({title:'حصنك اليومي',text:txt,url:APP_URL}).catch(()=>{});
-        else navigator.clipboard?.writeText(txt).then(()=>showMiniToast("✅ النص اتنسخ!"));
-        closeShareModal();return;
-    }
-    window.open(urls[platform],'_blank');
-    closeShareModal();
-}
-
-function showCelebration(title,msg){
-    DOM.celebTitle.innerText=title;
-    DOM.celebMsg.innerText=msg;
-    DOM.celebOverlay.classList.add("show");
-    navigator.vibrate?.([100,50,100,50,180]);
-}
-
-function closeCelebration(){
-    DOM.celebOverlay.classList.remove("show");
-}
-
-/* ================================================================
-   9. TASBEEH (التسبيح الحر)
-================================================================ */
-const tasbeehStorageKey=()=>`tasbeeh_${AppState.today}_${document.getElementById("tasbeehSelect").value}`;
-
-function openTasbeeh(){
-    hideAll();
-    document.getElementById("tasbeehArea").style.display="block";
-    setSpeech("سبح براحتك 🤍");
-    updateTasbeehDisplay();
-    goTo("tasbeehArea");
-}
-
-function updateTasbeehDisplay(){
-    AppState.freeCounter=0;
-    document.getElementById("freeCounter").innerText=0;
-    const allKeys=Object.keys(localStorage).filter(k=>k.startsWith(`tasbeeh_${AppState.today}_`));
-    const total=allKeys.reduce((s,k)=>s+(parseInt(localStorage.getItem(k))||0),0);
-    document.getElementById("tasbeehTodayCount").innerText=`تسبيحاتك اليوم: ${total}`;
+function openTasbeeh() {
+    hideAll(); document.getElementById("tasbeehArea").style.display = "block"; setSpeech("سبح براحتك 🤍");
+    AppState.freeCounter = 0; document.getElementById("freeCounter").innerText = 0;
+    const allKeys = Object.keys(localStorage).filter(k => k.startsWith(`tasbeeh_${AppState.today}_`));
+    const total = allKeys.reduce((s,k) => s + (parseInt(localStorage.getItem(k))||0), 0);
+    document.getElementById("tasbeehTodayCount").innerText = `تسبيحاتك اليوم: ${total}`; goTo("tasbeehArea");
 }
 
 document.getElementById("btnIncreaseTasbeeh").addEventListener("click", () => {
-    navigator.vibrate?.(30); 
-    AppState.freeCounter++;
-    document.getElementById("freeCounter").innerText=AppState.freeCounter;
-    
-    const key=tasbeehStorageKey();
-    localStorage.setItem(key,(parseInt(localStorage.getItem(key)||0)+1).toString());
-    const allKeys=Object.keys(localStorage).filter(k=>k.startsWith(`tasbeeh_${AppState.today}_`));
-    const total=allKeys.reduce((s,k)=>s+(parseInt(localStorage.getItem(k))||0),0);
-    document.getElementById("tasbeehTodayCount").innerText=`تسبيحاتك اليوم: ${total}`;
+    navigator.vibrate?.(30); AppState.freeCounter++; document.getElementById("freeCounter").innerText = AppState.freeCounter;
+    const key = `tasbeeh_${AppState.today}_${document.getElementById("tasbeehSelect").value}`;
+    localStorage.setItem(key, (parseInt(localStorage.getItem(key)||0)+1).toString());
 });
+document.getElementById("btnResetTasbeeh").addEventListener("click", () => { AppState.freeCounter=0; document.getElementById("freeCounter").innerText=0; });
 
-document.getElementById("btnResetTasbeeh").addEventListener("click", () => {
-    AppState.freeCounter=0;
-    document.getElementById("freeCounter").innerText=0;
-});
-
-document.getElementById("tasbeehSelect").addEventListener("change", () => {
-    AppState.freeCounter=0;
-    document.getElementById("freeCounter").innerText=0;
-});
-
-/* ================================================================
-   10. KAHF (سورة الكهف)
-================================================================ */
-const KAHF_TOTAL = kahfAyat.length; // تأكد من نسخ كل الآيات في data.js
-
-function openKahf(){
-    hideAll();
-    document.body.classList.add("kahf-theme");
-    document.getElementById("kahfArea").style.display="block";
-    document.getElementById("fridayBanner").classList.remove("show");
-    renderKahf();
-    goTo("kahfArea");
-    setSpeech("سورة الكهف نور 📖");
-}
-
-function renderKahf(){
-    const done = AppState.kahfIndex >= KAHF_TOTAL;
+function openKahf() { hideAll(); document.body.classList.add("kahf-theme"); document.getElementById("kahfArea").style.display="block"; renderKahf(); goTo("kahfArea"); }
+function renderKahf() {
+    const done = AppState.kahfIndex >= kahfAyat.length;
     document.getElementById("kahfText").style.display = done ? 'none' : 'flex';
     document.querySelector(".kahf-nav").style.display = done ? 'none' : 'grid';
     document.getElementById("kahfDone").style.display = done ? 'block' : 'none';
-    
-    if(!done){
+    if(!done) {
         const a = kahfAyat[AppState.kahfIndex];
-        if(a) {
-            document.getElementById("kahfText").innerHTML=`<div style="width:100%;"><div style="font-size:12px;color:#6ee7b7;margin-bottom:12px;opacity:.7;">﴿ ${a.n} ﴾</div><div style="font-size:20px;line-height:2.5;color:#f1f5f9;">${a.t}</div></div>`;
-            document.getElementById("kahfBadge").innerText=`${AppState.kahfIndex+1} / ${KAHF_TOTAL}`;
-            const pct=Math.round((AppState.kahfIndex+1)/KAHF_TOTAL*100);
-            document.getElementById("kahfProgress").style.width=pct+"%";
-            document.getElementById("kahfPct").innerText=pct+"%";
-        }
+        document.getElementById("kahfText").innerHTML = `<div style="width:100%;"><div style="font-size:12px;color:#6ee7b7;margin-bottom:12px;">﴿ ${a.n} ﴾</div><div style="font-size:20px;line-height:2.5;">${a.t}</div></div>`;
+        document.getElementById("kahfBadge").innerText = `${AppState.kahfIndex+1} / ${kahfAyat.length}`;
+        document.getElementById("kahfProgress").style.width = Math.round((AppState.kahfIndex+1)/kahfAyat.length*100) + "%";
     }
 }
+document.getElementById("btnKahfNext").addEventListener("click", () => { if(AppState.kahfIndex < kahfAyat.length) { AppState.kahfIndex++; localStorage.setItem("kahfIndex", AppState.kahfIndex); renderKahf(); } });
+document.getElementById("btnKahfPrev").addEventListener("click", () => { if(AppState.kahfIndex > 0) { AppState.kahfIndex--; localStorage.setItem("kahfIndex", AppState.kahfIndex); renderKahf(); } });
+document.getElementById("btnRestartKahf").addEventListener("click", () => { AppState.kahfIndex = 0; localStorage.setItem("kahfIndex","0"); renderKahf(); });
 
-document.getElementById("btnKahfNext").addEventListener("click", () => {
-    if(AppState.kahfIndex < KAHF_TOTAL){
-        AppState.kahfIndex++;
-        localStorage.setItem("kahfIndex", AppState.kahfIndex);
-        renderKahf();
-        if(AppState.kahfIndex >= KAHF_TOTAL){
-            showCelebration("🌟 أتممت سورة الكهف!","جعلها الله نوراً لك بين الجمعتين 🤍");
-        }
-    }
-});
-
-document.getElementById("btnKahfPrev").addEventListener("click", () => {
-    if(AppState.kahfIndex > 0){
-        AppState.kahfIndex--;
-        localStorage.setItem("kahfIndex", AppState.kahfIndex);
-        renderKahf();
-    }
-});
-
-document.getElementById("btnRestartKahf").addEventListener("click", () => {
-    AppState.kahfIndex = 0;
-    localStorage.setItem("kahfIndex","0");
-    renderKahf();
-});
-
-/* ================================================================
-   11. GROUP & SUPABASE (الجروبات وقاعدة البيانات)
-================================================================ */
-// إعدادات Supabase والـ API
-const SUPABASE_URL = 'https://ddqiiybuaozsjlrnckfz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_rzftsvyC9ahQTXW-Pq4BsA_EOTSY5kP';
-
-async function sbFetch(path, opts = {}) {
+async function sbFetch(path, opts={}) {
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': opts.prefer || 'return=representation',
-                ...opts.headers
-            },
-            ...opts
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const txt = await res.text();
-        return txt ? JSON.parse(txt) : [];
-    } catch (e) {
-        console.warn("Supabase Fetch Error:", e);
-        throw e;
-    }
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation', ...opts.headers }, ...opts });
+        if(!res.ok) throw new Error(await res.text());
+        const txt = await res.text(); return txt ? JSON.parse(txt) : [];
+    } catch(e) { throw e; }
 }
-
-// دالة إرسال الاستريك للجروب
 async function updateMyGroupStreak() {
-    if (!AppState.myGroupCode) return;
-    try {
-        await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, {
-            method: 'PATCH',
-            headers: { 'Prefer': 'return=representation' },
-            body: JSON.stringify({ streak: AppState.streak, done_today: true })
-        });
-    } catch (e) {
-        console.warn('تم التحديث محلياً فقط');
-    }
-}
-function openGroup(){
-    hideAll();
-    document.getElementById("groupArea").style.display="block";
-    if(AppState.myGroupCode && AppState.myName) showLeaderboard();
-    else {
-        document.getElementById("groupSetup").style.display="block";
-        document.getElementById("leaderboard").style.display="none";
-    }
-    goTo("groupArea");
+    if(!AppState.myGroupCode) return;
+    try { await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { method: 'PATCH', body: JSON.stringify({streak: AppState.streak, done_today: true}) }); } catch(e){}
 }
 
-document.getElementById("btnShowJoin").addEventListener("click", () => {
-    document.getElementById("joinRow").style.display="block";
-});
+function openGroup() { hideAll(); document.getElementById("groupArea").style.display="block"; if(AppState.myGroupCode) showLeaderboard(); else document.getElementById("groupSetup").style.display="block"; goTo("groupArea"); }
+document.getElementById("btnShowJoin").addEventListener("click", () => document.getElementById("joinRow").style.display="block");
 
-function setGroupStatus(msg,color='#f472b6'){
-    document.getElementById("groupStatus").style.color=color;
-    document.getElementById("groupStatus").innerText=msg;
-}
-
-function getWeekStart(){
-    const d=new Date(); d.setDate(d.getDate()-d.getDay()); 
-    return d.toISOString().split('T')[0];
-}
-
-async function createGroup(){
-    const name=document.getElementById("nameInput").value.trim();
-    if(!name){showMiniToast("اكتب اسمك الأول 😊");return;}
-    const code=Math.floor(100000+Math.random()*900000).toString();
-    setGroupStatus("⏳ جاري الإنشاء...");
-    
-    // Fallback Local Storage
-    const members={};
-    members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId};
+async function createGroup() {
+    const name = document.getElementById("nameInput").value.trim(); if(!name) return showMiniToast("اكتب اسمك الأول 😊");
+    const code = Math.floor(100000+Math.random()*900000).toString();
+    const members={}; members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId};
     localStorage.setItem("group_"+code, JSON.stringify(members));
-    
-    AppState.myGroupCode=code; AppState.myName=name;
-    localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
-    showLeaderboard(); showMiniToast(`✅ الجروب اتعمل! كوده: ${code}`);
+    AppState.myGroupCode=code; AppState.myName=name; localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
+    showLeaderboard(); showMiniToast(`✅ الجروب اتعمل!`);
 }
-
-async function joinGroup(){
-    const name=document.getElementById("nameInput").value.trim();
-    const code=document.getElementById("codeInput").value.trim();
-    if(!name){showMiniToast("اكتب اسمك الأول 😊");return;}
-    if(code.length!==6){showMiniToast("الكود لازم يكون 6 أرقام");return;}
-    
-    // Fallback Local Storage
-    AppState.myGroupCode=code; AppState.myName=name;
-    localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
-    
-    const members=JSON.parse(localStorage.getItem("group_"+code)||"{}");
-    members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId};
-    localStorage.setItem("group_"+code, JSON.stringify(members));
-    
+async function joinGroup() {
+    const name = document.getElementById("nameInput").value.trim(), code = document.getElementById("codeInput").value.trim();
+    if(!name || code.length!==6) return showMiniToast("تأكد من الاسم والكود");
+    AppState.myGroupCode=code; AppState.myName=name; localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
+    const members = JSON.parse(localStorage.getItem("group_"+code)||"{}"); members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId}; localStorage.setItem("group_"+code, JSON.stringify(members));
     showLeaderboard(); showMiniToast("✅ انضممت!");
 }
+document.getElementById("btnCreateGroup").addEventListener("click", createGroup); document.getElementById("btnJoinGroup").addEventListener("click", joinGroup);
 
-document.getElementById("btnCreateGroup").addEventListener("click", createGroup);
-document.getElementById("btnJoinGroup").addEventListener("click", joinGroup);
-
-async function showLeaderboard(){
-    document.getElementById("groupSetup").style.display="none";
-    document.getElementById("leaderboard").style.display="block";
-    document.getElementById("groupCodeDisplay").innerText=`📋 ${AppState.myGroupCode}`;
-    document.getElementById("lbWeekInfo").innerText=`📅 تحدي الأسبوع — بيصفر كل جمعة 🔄`;
-    renderLeaderboard();
+function showLeaderboard() { document.getElementById("groupSetup").style.display="none"; document.getElementById("leaderboard").style.display="block"; document.getElementById("groupCodeDisplay").innerText=`📋 ${AppState.myGroupCode}`; renderLeaderboard(); }
+function renderLeaderboard() {
+    const members = JSON.parse(localStorage.getItem("group_"+AppState.myGroupCode)||"{}"); const arr = Object.values(members).sort((a,b)=>b.streak-a.streak);
+    let html=''; arr.forEach((m,i)=> { html+=`<div class="lb-row"><div class="lb-rank">${['🥇','🥈','🥉'][i]||'👤'}</div><div class="lb-name">${m.name}</div><div class="lb-streak">🔥${m.streak}</div></div>`; });
+    document.getElementById("lbRows").innerHTML = html || '<div style="text-align:center;">ابعت الكود لأصحابك!</div>';
 }
+document.getElementById("btnLeaveGroup").addEventListener("click", () => { localStorage.removeItem("myGroupCode"); AppState.myGroupCode=null; document.getElementById("leaderboard").style.display="none"; document.getElementById("groupSetup").style.display="block"; });
 
-async function renderLeaderboard(){
-    const ranks=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
-    const members = JSON.parse(localStorage.getItem("group_"+AppState.myGroupCode)||"{}");
-    const arr = Object.values(members).sort((a,b)=>b.streak-a.streak);
-    
-    let html='';
-    arr.forEach((m,i)=>{
-        const isMe = m.user_id === AppState.myUserId;
-        html+=`<div class="lb-row ${isMe?'me':''}">
-          <div class="lb-rank">${ranks[i]||'👤'}</div>
-          <div class="lb-name">${m.name}${isMe?' (أنا)':''}</div>
-          <div class="lb-streak">🔥${m.streak||0}</div>
-          <div class="lb-done">${m.done_today?'✅':'⏳'}</div>
-        </div>`;
-    });
-    if(!arr.length) html='<div class="group-loading">ابعت الكود لأصحابك عشان ينضموا! 🌿</div>';
-    document.getElementById("lbRows").innerHTML=html;
-    renderHomeLB(arr);
-}
+function openShareModal(ctx) { AppState.shareContext = ctx; DOM.shareModal.classList.add("show"); }
+function closeShareModal() { DOM.shareModal.classList.remove("show"); }
+function doShare(platform) { const txt = `✨ حصنك اليومي\n📲 ${APP_URL}`; if(platform==='copy'){ navigator.clipboard?.writeText(txt); showMiniToast("نسخ!"); } closeShareModal(); }
 
-function renderHomeLB(arr){
-    if(!arr||!arr.length){document.getElementById("homeLB").style.display="none";return;}
-    document.getElementById("homeLB").style.display="block";
-    const ranks=['🥇','🥈','🥉','4️⃣','5️⃣'];
-    let html='';
-    arr.slice(0,5).forEach((m,i)=>{
-        const isMe = m.user_id === AppState.myUserId;
-        html+=`<div class="home-lb-row ${isMe?'me':''}"><div class="home-lb-rank">${ranks[i]}</div><div class="home-lb-name">${m.name}${isMe?' 👈':''}</div><div class="home-lb-streak">🔥${m.streak||0}</div><div class="home-lb-done">${m.done_today?'✅':'⏳'}</div></div>`;
-    });
-    document.getElementById("homeLBRows").innerHTML=html;
-}
+function showCelebration(title, msg) { DOM.celebTitle.innerText = title; DOM.celebMsg.innerText = msg; DOM.celebOverlay.classList.add("show"); }
+function closeCelebration() { DOM.celebOverlay.classList.remove("show"); }
 
-document.getElementById("groupCodeDisplay").addEventListener("click", () => {
-    navigator.clipboard?.writeText(AppState.myGroupCode).then(()=>showMiniToast("✅ الكود اتنسخ!"));
-});
-
-document.getElementById("btnLeaveGroup").addEventListener("click", () => {
-    if(confirm('هتطلع من الجروب؟')){
-        localStorage.removeItem("myGroupCode"); localStorage.removeItem("myName");
-        AppState.myGroupCode=null; AppState.myName=null;
-        document.getElementById("groupSetup").style.display="block";
-        document.getElementById("leaderboard").style.display="none";
-        document.getElementById("homeLB").style.display="none";
-    }
-});
-
-document.getElementById("btnShareGroup").addEventListener("click", () => openShareModal('group'));
-
-// تحميل الجروب عند فتح الصفحة لو موجود
-if(AppState.myGroupCode && AppState.myName){
-    setTimeout(() => { renderLeaderboard(); }, 500);
-}
-
-/* ================================================================
-   12. NOTIFICATIONS & ALERTS (الإشعارات)
-================================================================ */
-function updateToggleUI(){
+document.getElementById("notifToggle").addEventListener("click", () => {
+    AppState.notifEnabled = !AppState.notifEnabled; localStorage.setItem("notifEnabled", AppState.notifEnabled);
     document.getElementById("notifToggle").classList.toggle("on", AppState.notifEnabled);
     document.getElementById("notifStatus").innerText = AppState.notifEnabled ? "شغال" : "إيقاف";
-}
-updateToggleUI();
+});
 
-async function toggleNotif(){
-    if(AppState.notifEnabled){
-        AppState.notifEnabled=false; 
-        localStorage.setItem("notifEnabled","false");
-        if(AppState.notifInterval) clearInterval(AppState.notifInterval);
-        updateToggleUI(); showMiniToast("تم إيقاف التذكيرات");
-        return;
-    }
-    if(!("Notification" in window)){showMiniToast("المتصفح مش بيدعم الإشعارات 😔");return;}
-    const perm = await Notification.requestPermission();
-    if(perm!=="granted"){showMiniToast("محتاج إذنك 🙏");return;}
-    
-    AppState.notifEnabled=true; localStorage.setItem("notifEnabled","true");
-    updateToggleUI(); showMiniToast("✅ فعّلت التذكيرات!"); startNotifLoop();
-}
-
-document.getElementById("notifToggle").addEventListener("click", toggleNotif);
-
-function startNotifLoop(){
-    if(AppState.notifInterval) clearInterval(AppState.notifInterval);
-    AppState.notifInterval = setInterval(()=>{
-        if(!AppState.notifEnabled) return;
-        const now=new Date(), h=now.getHours(), m=now.getMinutes(), d=now.getDay();
-        if(m!==0) return; 
-        
-        if(h===8) sendNotif("🌅 صباح الأذكار!","ابدأ يومك بذكر الله يا بطل 🌿");
-        if(h===17) sendNotif("🌙 أذكار المساء!","اختم يومك بذكر الله وتنام محصن 🤍");
-        if(d===5 && h===14) sendNotif("📖 سورة الكهف!","سورة الكهف نور بين الجمعتين ✨");
-    }, 60000);
-}
-
-function sendNotif(title,body){
-    if(Notification.permission==="granted") new Notification(title,{body,icon:"/icons/icon-192x192.png"});
-}
-
-if(AppState.notifEnabled && "Notification" in window && Notification.permission==="granted") startNotifLoop();
-
-// Banners
-(()=>{
-    const h=new Date().getHours(), d=new Date().getDay();
-    if(d===5) document.getElementById("fridayBanner").classList.add("show");
-    if(h>=5&&h<11) document.getElementById("morningBanner").classList.add("show");
-    if(h>=16&&h<21) document.getElementById("eveningBanner").classList.add("show");
-})();
-
-document.getElementById("btnAlertKahf").addEventListener("click", openKahf);
-
-/* ================================================================
-   13. PWA & INSTALL TO HOME SCREEN
-================================================================ */
 let deferredPrompt = null;
-const installBtn = document.getElementById('installBtn');
-
-// المتصفح بيقول للتطبيق إنه جاهز للتنزيل
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'block';
-});
-
-// لما المستخدم يضغط على الزرار
-installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        installBtn.style.display = 'none';
-        showMiniToast('🎉 جزاك الله خيراً.. حصنك بقى على الشاشة الرئيسية!');
-    }
-    deferredPrompt = null;
-});
-
-window.addEventListener('appinstalled', () => {
-    installBtn.style.display = 'none';
-});
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installBtn').style.display = 'block'; });
+document.getElementById('installBtn').addEventListener('click', async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') document.getElementById('installBtn').style.display = 'none'; deferredPrompt = null; });
+window.addEventListener('appinstalled', () => document.getElementById('installBtn').style.display = 'none');
