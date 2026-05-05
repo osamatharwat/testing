@@ -196,27 +196,165 @@ async function updateMyGroupStreak() {
     try { await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&user_id=eq.${AppState.myUserId}`, { method: 'PATCH', body: JSON.stringify({streak: AppState.streak, done_today: true}) }); } catch(e){}
 }
 
-function openGroup() { hideAll(); document.getElementById("groupArea").style.display="block"; if(AppState.myGroupCode) showLeaderboard(); else document.getElementById("groupSetup").style.display="block"; goTo("groupArea"); }
-document.getElementById("btnShowJoin").addEventListener("click", () => document.getElementById("joinRow").style.display="block");
+/* ================================================================
+   11. GROUP & SUPABASE (الجروبات وقاعدة البيانات)
+================================================================ */
+function openGroup() { 
+    hideAll(); 
+    document.getElementById("groupArea").style.display = "block"; 
+    if(AppState.myGroupCode) showLeaderboard(); 
+    else document.getElementById("groupSetup").style.display = "block"; 
+    goTo("groupArea"); 
+}
+
+document.getElementById("btnShowJoin").addEventListener("click", () => document.getElementById("joinRow").style.display = "block");
+
+function setGroupStatus(msg, color='#f472b6') {
+    const statusEl = document.getElementById("groupStatus");
+    statusEl.style.color = color;
+    statusEl.innerText = msg;
+}
+
+function getWeekStart() {
+    const d = new Date(); d.setDate(d.getDate() - d.getDay()); 
+    return d.toISOString().split('T')[0];
+}
 
 async function createGroup() {
-    const name = document.getElementById("nameInput").value.trim(); if(!name) return showMiniToast("اكتب اسمك الأول 😊");
-    const code = Math.floor(100000+Math.random()*900000).toString();
-    const members={}; members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId};
-    localStorage.setItem("group_"+code, JSON.stringify(members));
-    AppState.myGroupCode=code; AppState.myName=name; localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
-    showLeaderboard(); showMiniToast(`✅ الجروب اتعمل!`);
-}
-async function joinGroup() {
-    const name = document.getElementById("nameInput").value.trim(), code = document.getElementById("codeInput").value.trim();
-    if(!name || code.length!==6) return showMiniToast("تأكد من الاسم والكود");
-    AppState.myGroupCode=code; AppState.myName=name; localStorage.setItem("myGroupCode",code); localStorage.setItem("myName",name);
-    const members = JSON.parse(localStorage.getItem("group_"+code)||"{}"); members[AppState.myUserId] = {name, streak: AppState.streak, done_today: false, user_id: AppState.myUserId}; localStorage.setItem("group_"+code, JSON.stringify(members));
-    showLeaderboard(); showMiniToast("✅ انضممت!");
-}
-document.getElementById("btnCreateGroup").addEventListener("click", createGroup); document.getElementById("btnJoinGroup").addEventListener("click", joinGroup);
+    const name = document.getElementById("nameInput").value.trim(); 
+    if(!name) return showMiniToast("اكتب اسمك الأول 😊");
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGroupStatus("⏳ جاري الإنشاء أونلاين...", "#fcd34d");
 
-function showLeaderboard() { document.getElementById("groupSetup").style.display="none"; document.getElementById("leaderboard").style.display="block"; document.getElementById("groupCodeDisplay").innerText=`📋 ${AppState.myGroupCode}`; renderLeaderboard(); }
+    try {
+        // إنشاء الجروب أونلاين
+        await sbFetch('groups', { 
+            method: 'POST', 
+            body: JSON.stringify({ code: code, name: name + "'s Group", week_start: getWeekStart() }) 
+        });
+        
+        // إضافة المستخدم كأول عضو
+        await sbFetch('members', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday })
+        });
+
+        AppState.myGroupCode = code; AppState.myName = name; 
+        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
+        showLeaderboard(); showMiniToast(`✅ الجروب اتعمل أونلاين! كوده: ${code}`);
+    } catch (e) {
+        console.warn("Supabase Error:", e);
+        // في حالة فشل الاتصال بالنت، يشتغل محلي مؤقتاً
+        const members = {}; members[AppState.myUserId] = {name, streak: AppState.streak, done_today: AppState.completedToday, user_id: AppState.myUserId};
+        localStorage.setItem("group_" + code, JSON.stringify(members));
+        AppState.myGroupCode = code; AppState.myName = name; 
+        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
+        showLeaderboard(); showMiniToast(`⚠️ الجروب اتعمل محلياً لعدم وجود نت!`);
+    }
+}
+
+async function joinGroup() {
+    const name = document.getElementById("nameInput").value.trim();
+    const code = document.getElementById("codeInput").value.trim();
+    
+    if(!name || code.length !== 6) return showMiniToast("تأكد من الاسم والكود");
+    
+    setGroupStatus("⏳ جاري الانضمام أونلاين...", "#fcd34d");
+
+    try {
+        // التأكد من أن الجروب موجود في قاعدة البيانات
+        const groups = await sbFetch(`groups?code=eq.${code}&select=code`);
+        if(!groups.length) {
+            setGroupStatus("❌ الكود ده مش موجود، تأكد منه", '#ef4444');
+            return;
+        }
+
+        // إضافة العضو أونلاين
+        await sbFetch('members', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify({ group_code: code, user_id: AppState.myUserId, name: name, streak: AppState.streak, done_today: AppState.completedToday })
+        });
+
+        AppState.myGroupCode = code; AppState.myName = name; 
+        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
+        showLeaderboard(); showMiniToast("✅ انضممت أونلاين بنجاح!");
+    } catch (e) {
+        console.warn("Supabase Error:", e);
+        // في حالة فشل الاتصال بالنت، يشتغل محلي مؤقتاً
+        AppState.myGroupCode = code; AppState.myName = name; 
+        localStorage.setItem("myGroupCode", code); localStorage.setItem("myName", name);
+        const members = JSON.parse(localStorage.getItem("group_" + code) || "{}"); 
+        members[AppState.myUserId] = {name, streak: AppState.streak, done_today: AppState.completedToday, user_id: AppState.myUserId}; 
+        localStorage.setItem("group_" + code, JSON.stringify(members));
+        showLeaderboard(); showMiniToast("⚠️ انضممت محلياً لعدم وجود نت!");
+    }
+}
+
+document.getElementById("btnCreateGroup").addEventListener("click", createGroup); 
+document.getElementById("btnJoinGroup").addEventListener("click", joinGroup);
+
+function showLeaderboard() { 
+    document.getElementById("groupSetup").style.display = "none"; 
+    document.getElementById("leaderboard").style.display = "block"; 
+    document.getElementById("groupCodeDisplay").innerText = `📋 ${AppState.myGroupCode}`; 
+    renderLeaderboard(); 
+}
+
+async function renderLeaderboard() {
+    const ranks = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+    document.getElementById("lbRows").innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 10px;">⏳ جاري التحميل من السيرفر...</div>';
+    
+    let arr = [];
+    try {
+        // جلب البيانات من السيرفر أونلاين
+        arr = await sbFetch(`members?group_code=eq.${AppState.myGroupCode}&order=streak.desc&limit=10`);
+    } catch (e) {
+        // في حالة فشل الاتصال، جلب المحلي
+        console.warn("Supabase Error, local fallback:", e);
+        const members = JSON.parse(localStorage.getItem("group_" + AppState.myGroupCode) || "{}"); 
+        arr = Object.values(members).sort((a, b) => b.streak - a.streak);
+    }
+
+    let html = ''; 
+    arr.forEach((m, i) => { 
+        const isMe = m.user_id === AppState.myUserId;
+        html += `<div class="lb-row ${isMe ? 'me' : ''}">
+                    <div class="lb-rank">${ranks[i] || '👤'}</div>
+                    <div class="lb-name">${m.name} ${isMe ? '(أنا)' : ''}</div>
+                    <div class="lb-streak">🔥${m.streak || 0}</div>
+                    <div class="lb-done">${m.done_today ? '✅' : '⏳'}</div>
+                 </div>`; 
+    });
+    
+    document.getElementById("lbRows").innerHTML = html || '<div style="text-align:center; color:#94a3b8;">ابعت الكود لأصحابك عشان ينضموا! 🌿</div>';
+    renderHomeLB(arr);
+}
+
+function renderHomeLB(arr) {
+    if(!arr || !arr.length){ document.getElementById("homeLB").style.display="none"; return; }
+    document.getElementById("homeLB").style.display="block";
+    const ranks=['🥇','🥈','🥉','4️⃣','5️⃣'];
+    let html='';
+    arr.slice(0,5).forEach((m,i) => {
+        const isMe = m.user_id === AppState.myUserId;
+        html += `<div class="home-lb-row ${isMe ? 'me' : ''}">
+                    <div class="home-lb-rank">${ranks[i]}</div>
+                    <div class="home-lb-name">${m.name}${isMe ? ' 👈' : ''}</div>
+                    <div class="home-lb-streak">🔥${m.streak || 0}</div>
+                    <div class="home-lb-done">${m.done_today ? '✅' : '⏳'}</div>
+                 </div>`;
+    });
+    document.getElementById("homeLBRows").innerHTML = html;
+}
+
+document.getElementById("btnLeaveGroup").addEventListener("click", () => { 
+    localStorage.removeItem("myGroupCode"); AppState.myGroupCode = null; 
+    document.getElementById("leaderboard").style.display = "none"; 
+    document.getElementById("groupSetup").style.display = "block"; 
+});
 function renderLeaderboard() {
     const members = JSON.parse(localStorage.getItem("group_"+AppState.myGroupCode)||"{}"); const arr = Object.values(members).sort((a,b)=>b.streak-a.streak);
     let html=''; arr.forEach((m,i)=> { html+=`<div class="lb-row"><div class="lb-rank">${['🥇','🥈','🥉'][i]||'👤'}</div><div class="lb-name">${m.name}</div><div class="lb-streak">🔥${m.streak}</div></div>`; });
