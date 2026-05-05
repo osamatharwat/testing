@@ -21,23 +21,39 @@ AppState.completedToday = localStorage.getItem("completedToday") === AppState.to
 localStorage.setItem("myUserId", AppState.myUserId);
 
 const DOM = {
-    sadaqaScroll: document.getElementById("sadaqaScroll"), duaGrid: document.getElementById("duaGrid"),
+    sadaqaScroll: document.getElementById("sadaqaScroll"), 
+    duaGrid: document.getElementById("duaGrid"),
+    
+    // 👈 السطر ده اللي كان ناقص وموقف الأذكار والأدعية!
+    card: document.getElementById("card"), 
+    
     sections: ['card', 'tasbeehArea', 'kahfArea', 'groupArea', 'finish'].map(id => document.getElementById(id)),
-    quote: document.getElementById("quote"), streakBadge: document.getElementById("streak"), streakWarning: document.getElementById("streakWarning"),
-    speech: document.getElementById("speech"), inlineSpeech: document.getElementById("inlineSpeech"),
-    xp: document.getElementById("xp"), combo: document.getElementById("combo"),
-    zekrTitle: document.getElementById("zekrTitle"), zekrText: document.getElementById("zekrText"), zekrFadl: document.getElementById("zekrFadl"),
-    repeat: document.getElementById("repeat"), counter: document.getElementById("counter"), progress: document.getElementById("progress"),
-    btnMorning: document.getElementById("btnMorning"), btnEvening: document.getElementById("btnEvening"), btnQuick: document.getElementById("btnQuick"),
-    btnTasbeehMode: document.getElementById("btnTasbeehMode"), btnKahfMode: document.getElementById("btnKahfMode"), btnGroupMode: document.getElementById("btnGroupMode"),
-    btnCountZekr: document.getElementById("btnCountZekr"), btnBacks: document.querySelectorAll('.btn-close-section'),
-    shareModal: document.getElementById("shareModal"), celebOverlay: document.getElementById("celebOverlay"), celebTitle: document.getElementById("celebTitle"), celebMsg: document.getElementById("celebMsg")
+    quote: document.getElementById("quote"), 
+    streakBadge: document.getElementById("streak"), 
+    streakWarning: document.getElementById("streakWarning"),
+    speech: document.getElementById("speech"), 
+    inlineSpeech: document.getElementById("inlineSpeech"),
+    xp: document.getElementById("xp"), 
+    combo: document.getElementById("combo"),
+    zekrTitle: document.getElementById("zekrTitle"), 
+    zekrText: document.getElementById("zekrText"), 
+    zekrFadl: document.getElementById("zekrFadl"),
+    repeat: document.getElementById("repeat"), 
+    counter: document.getElementById("counter"), 
+    progress: document.getElementById("progress"),
+    btnMorning: document.getElementById("btnMorning"), 
+    btnEvening: document.getElementById("btnEvening"), 
+    btnQuick: document.getElementById("btnQuick"),
+    btnTasbeehMode: document.getElementById("btnTasbeehMode"), 
+    btnKahfMode: document.getElementById("btnKahfMode"), 
+    btnGroupMode: document.getElementById("btnGroupMode"),
+    btnCountZekr: document.getElementById("btnCountZekr"), 
+    btnBacks: document.querySelectorAll('.btn-close-section'),
+    shareModal: document.getElementById("shareModal"), 
+    celebOverlay: document.getElementById("celebOverlay"), 
+    celebTitle: document.getElementById("celebTitle"), 
+    celebMsg: document.getElementById("celebMsg")
 };
-
-document.addEventListener("DOMContentLoaded", () => {
-    initStreak(); renderDynamicLists(); bindEvents();
-    DOM.quote.innerText = AppState.currentQuote;
-});
 
 function renderDynamicLists() {
     let sadaqaHtml = '';
