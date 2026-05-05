@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png"/>
 <meta name="description" content="تطبيق أذكار الصباح والمساء اليومية"/>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
-<!-- Supabase يتحمل أول قبل أي حاجة تانية -->
+<!-- Supabase  -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif;-webkit-tap-highlight-color:transparent;}
@@ -258,6 +258,47 @@ body.kahf-theme{background:radial-gradient(circle at top,#065f46,#020617);}
 
 #installBtn{display:none;margin-bottom:10px;width:100%;background:linear-gradient(135deg,#22c55e,#15803d);border:none;color:white;padding:13px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif;}
 #iosHint{display:none;margin-bottom:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:11px 13px;font-size:12px;color:#fde68a;line-height:1.8;text-align:center;}
+.dua-box{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:16px;
+  margin-bottom:14px;
+}
+
+.dua-title{
+  text-align:center;
+  font-size:15px;
+  font-weight:900;
+  color:#a7f3d0;
+  margin-bottom:12px;
+}
+
+.dua-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.dua-card{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  padding:14px;
+  text-align:center;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.dua-card:hover{
+  background:rgba(255,255,255,.12);
+  transform:translateY(-2px);
+}
+
+.dua-name{
+  font-size:13px;
+  font-weight:800;
+}
 </style>
 </head>
 <body>
@@ -456,11 +497,26 @@ body.kahf-theme{background:radial-gradient(circle at top,#065f46,#020617);}
     <div class="finish-next-hint" id="nextHint"></div>
     <button class="btn main-btn" style="margin-top:12px;" onclick="openShareModal('finish')">📤 شارك إنجازك وكمّل الصدقة</button>
   </div>
+      <!-- POPULAR DUAS -->
+<div class="dua-box">
+  <div class="dua-title">🤲 الأدعية المشهورة</div>
 
+  <div class="dua-grid">
+
+    <div class="dua-card" onclick="openDua('karb')"><div class="dua-name">فك الكرب</div></div>
+       <div class="dua-card" onclick="openDua('hamm')"><div class="dua-name">الهم والحزن</div></div>
+       <div class="dua-card" onclick="openDua('shifa')"><div class="dua-name">الشفاء</div></div>
+       <div class="dua-card" onclick="openDua('rizq')"><div class="dua-name">الرزق</div></div>
+       <div class="dua-card" onclick="openDua('maghfera')"><div class="dua-name">المغفرة</div></div>
+       <div class="dua-card" onclick="openDua('istikhara')"><div class="dua-name">الاستخارة</div></div>
+       <div class="dua-card" onclick="openDua('sleep')"><div class="dua-name">قبل النوم</div></div>
+       <div class="dua-card" onclick="openDua('anxiety')"><div class="dua-name">القلق</div></div>
+       <div class="dua-card" onclick="openDua('protection')"><div class="dua-name">الحفظ</div></div>
+       <div class="dua-card" onclick="openDua('general')"><div class="dua-name">دعاء جامع</div></div>
+
+  </div>
+</div>
   <div class="footer">شارك التطبيق تؤجر عليه ❤️</div>
-  <button id="installBtn" class="btn" style="margin-bottom:10px;display:none;">
-  📲 تنزيل التطبيق
-</button>
 </div>
 
 <!-- MASCOT -->
@@ -747,7 +803,7 @@ const motiv=[
   "الله أكبر من كل شيء 🕌","استمر لا تتوقف 🔥"
 ];
 
-/* ================================================================
+};/* ================================================================
    STREAK + QUOTES INIT
 ================================================================ */
 let currentQuote = quotes[Math.floor(Math.random()*quotes.length)];
@@ -1217,6 +1273,69 @@ if(notifEnabled&&"Notification" in window&&Notification.permission==="granted")s
   if(h>=16&&h<21)document.getElementById("eveningBanner").classList.add("show");
 })();
 
+  const duas = {
+  karb: {
+    text: "لا إله إلا أنت سبحانك إني كنت من الظالمين",
+    ref: "رواه الترمذي وصححه الألباني"
+  },
+  hamm: {
+    text: "اللهم إني أعوذ بك من الهم والحزن والعجز والكسل",
+    ref: "رواه البخاري"
+  },
+  shifa: {
+    text: "اللهم رب الناس أذهب البأس اشفِ أنت الشافي",
+    ref: "متفق عليه"
+  },
+  rizq: {
+    text: "اللهم اكفني بحلالك عن حرامك وأغنني بفضلك عمن سواك",
+    ref: "رواه الترمذي"
+  },
+  maghfera: {
+    text: "اللهم إنك عفو تحب العفو فاعفُ عني",
+    ref: "رواه الترمذي"
+  },
+  istikhara: {
+    text: "اللهم إني أستخيرك بعلمك وأستقدرك بقدرتك",
+    ref: "رواه البخاري"
+  },
+  sleep: {
+    text: "باسمك اللهم أموت وأحيا",
+    ref: "رواه البخاري"
+  },
+  anxiety: {
+    text: "اللهم رحمتك أرجو فلا تكلني إلى نفسي طرفة عين",
+    ref: "رواه أبو داود"
+  },
+  protection: {
+    text: "بسم الله الذي لا يضر مع اسمه شيء",
+    ref: "رواه أبو داود"
+  },
+  general: {
+    text: "ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة",
+    ref: "متفق عليه"
+  }
+};
+/* ================================================================
+   STREAK + QUOTES INIT
+================================================================ */
+function openDua(type){
+  const dua = duas[type];
+  if(!dua){
+    console.log("❌ النوع مش موجود:", type);
+    return;
+  }
+
+  document.getElementById("card").style.display = "block";
+
+  document.getElementById("zekrTitle").innerText = "🤲 دعاء";
+  document.getElementById("zekrText").innerText = dua.text;
+  document.getElementById("zekrFadl").innerText = "📖 " + dua.ref;
+
+  document.getElementById("repeat").innerText = "-";
+  document.getElementById("counter").innerText = "0";
+
+  document.getElementById("card").scrollIntoView({behavior:"smooth"});
+}
 /* ================================================================
    PWA
 ================================================================ */
@@ -1243,29 +1362,6 @@ if('serviceWorker' in navigator){
 }
 const up=new URLSearchParams(window.location.search),mp=up.get('mode');
 if(mp&&['morning','evening','quick'].includes(mp))setTimeout(()=>startMode(mp),400);
-  let deferredPrompt;
-const installBtn = document.getElementById('installBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.style.display = 'block';
-});
-
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-
-  const { outcome } = await deferredPrompt.userChoice;
-
-  if (outcome === 'accepted') {
-    console.log('User installed');
-  }
-
-  deferredPrompt = null;
-  installBtn.style.display = 'none';
-});
 </script>
 </body>
 </html>
