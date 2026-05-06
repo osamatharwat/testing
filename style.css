@@ -57,7 +57,7 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
 .inline-mascot-text { font-size: 11px; font-weight: 800; color: #fde68a; }
 
 .progress-container { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 50px; overflow: hidden; margin-bottom: 20px; }
-.progress { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #34d399); transition: 0.5s; }
+.progress { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #34d399); transition: 0.2s linear; }
 
 .zekr-title { text-align: center; font-size: 16px; color: #fcd34d; margin-bottom: 12px; font-weight: 900; }
 .zekr-text { line-height: 2.2; font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 16px; white-space: pre-line; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
@@ -112,7 +112,9 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
 .s-copy{background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,0.2);}
 .s-native{background: linear-gradient(135deg,#6366f1,#4338ca);}
 
+/* إخفاء الكروت لحد ما المستخدم يختار */
 #card, .tasbeeh-area, .kahf-area, .group-area, .finish { display: none; }
+
 .group-input, .tasbeeh-select { width: 100%; padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: white; font-size: 15px; font-weight: 600; margin-bottom: 12px; text-align: center; }
 .group-create-btn, .group-join-btn, .sadaqa-share-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 14px; border-radius: 16px; color: white; font-weight: 800; font-size: 14px; width:100%; cursor: pointer; transition: 0.3s; font-family:'Cairo';}
 .group-create-btn:active { transform: scale(0.96); }
@@ -124,60 +126,9 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
 .alert-title { font-size:14px; font-weight:900; color:#fde68a; margin-bottom:5px; }
 .alert-sub { font-size:12px; color:#cbd5e1; }
 
-/* ================================================================
-   تجميل قائمة المتصدرين (Scrollable Leaderboard)
-================================================================ */
-
-/* 1. تحديد طول القائمة وتفعيل التمرير الداخلي */
-#lbRows {
-    max-height: 260px; /* طول القائمة (بيظهر حوالي 4 أشخاص والباقي سكرول) */
-    overflow-y: auto; /* تفعيل السكرول */
-    padding-left: 5px; /* مسافة عشان شريط السكرول ميبقاش لازق في الكلام */
-    margin-bottom: 15px;
-    border-radius: 12px;
-}
-
-/* 2. تجميل شكل شريط السكرول نفسه عشان يليق مع الزجاج اللامع */
-#lbRows::-webkit-scrollbar {
-    width: 6px; /* عرض الشريط */
-}
-#lbRows::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02); 
-    border-radius: 10px;
-}
-#lbRows::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15); 
-    border-radius: 10px;
-}
-#lbRows::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3); 
-}
-
-/* 3. تجميل شكل صفوف الأعضاء (الكروت الداخلية) */
-.lb-row {
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03); /* شفافية خفيفة */
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-}
-
-/* حركة خفيفة لما تلمس اسم حد في القائمة */
-.lb-row:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-2px);
-}
-
-/* 4. تمييز صفك أنت (أنا) بشكل فخم ومختلف */
-.lb-row.me {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.05));
-    border: 1px solid rgba(244, 114, 182, 0.3);
-    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.1);
-}
-/* ================================================================
-   تنسيق مربع الجروب في الصفحة الرئيسية (Mini Leaderboard)
-================================================================ */
+/* ----------------------------------------------------
+   تنسيق الجروب في الصفحة الرئيسية (الهوم)
+---------------------------------------------------- */
 .home-lb {
     background: var(--glass-bg);
     backdrop-filter: blur(24px);
@@ -187,60 +138,28 @@ body.kahf-theme::before { background: rgba(6, 95, 70, 0.3); }
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: var(--glow-shadow);
-    display: none; /* بيتم إظهاره برمجياً */
+    display: none;
 }
+.home-lb-title { font-size: 15px; font-weight: 900; color: #fcd34d; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.home-lb-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 14px; margin-bottom: 8px; transition: 0.3s; }
+.home-lb-row.me { background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.05)); border: 1px solid rgba(244, 114, 182, 0.3); }
+.home-lb-rank { font-size: 16px; width: 25px; text-align: center; }
+.home-lb-name { flex: 1; font-size: 13px; font-weight: 800; color: white; padding-right: 8px; }
+.home-lb-streak { font-size: 12px; font-weight: 700; display: flex; align-items: center; }
+.home-lb-done { font-size: 14px; width: 25px; text-align: left; }
 
-.home-lb-title {
-    font-size: 15px;
-    font-weight: 900;
-    color: #fcd34d;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.home-lb-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* عشان يوزعهم على سطر واحد */
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    margin-bottom: 8px;
-    transition: 0.3s;
-}
-
-.home-lb-row.me {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.05));
-    border: 1px solid rgba(244, 114, 182, 0.3);
-}
-
-.home-lb-rank {
-    font-size: 16px;
-    width: 25px;
-    text-align: center;
-}
-
-.home-lb-name {
-    flex: 1; /* عشان الاسم ياخد باقي المساحة الفاضية في النص */
-    font-size: 13px;
-    font-weight: 800;
-    color: white;
-    padding-right: 8px;
-}
-
-.home-lb-streak {
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-}
-
-.home-lb-done {
-    font-size: 14px;
-    width: 25px;
-    text-align: left;
-}
+/* ----------------------------------------------------
+   تنسيق التمرير الداخلي لجروب المتصدرين (Scrollable Leaderboard)
+---------------------------------------------------- */
+#lbRows { max-height: 260px; overflow-y: auto; padding-left: 5px; margin-bottom: 15px; border-radius: 12px; }
+#lbRows::-webkit-scrollbar { width: 6px; }
+#lbRows::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+#lbRows::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+#lbRows::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+.lb-row { padding: 12px 16px; margin-bottom: 8px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center;}
+.lb-row:hover { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); }
+.lb-row.me { background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(244, 114, 182, 0.05)); border: 1px solid rgba(244, 114, 182, 0.3); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.1); }
+.lb-rank { font-size: 16px; width: 30px; text-align: center; }
+.lb-name { flex: 1; font-size: 14px; font-weight: 800; padding-right: 10px; }
+.lb-streak { font-weight: 800; display:flex; align-items:center; }
+.lb-done { width: 30px; text-align: left; }
